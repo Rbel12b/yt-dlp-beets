@@ -1,7 +1,6 @@
-thirdparty/windows/python
-thirdparty/windows/ffmpeg.exe
-thirdparty/windows/ffprobe.exe
-thirdparty/windows/yt-dlp.exe
+thirdparty/windows
+thirdparty/linux
+thirdparty/licenses/LICENSE.*.txt
 build
 build-win
 _CPack_Packages

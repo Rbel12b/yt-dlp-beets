@@ -1,0 +1,8 @@
+[Desktop Entry]
+Name=@APP_NAME@
+Exec=@APP_EXECUTABLE@ %U
+Icon=@APP_NAME@
+Type=Application
+Terminal=false
+Categories=Audio;Utility;
+StartupWMClass=@APP_NAME@
