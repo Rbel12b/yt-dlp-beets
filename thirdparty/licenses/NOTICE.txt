@@ -1,0 +1,7 @@
+This software bundles the following components:
+
+- Python © Python Software Foundation – PSF License
+- FFmpeg © FFmpeg developers – GPL v2 or later
+- yt-dlp – Public Domain (Unlicense)
+
+See the "licenses" folder in the installation directory for full texts.

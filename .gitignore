@@ -1,0 +1,9 @@
+thirdparty/windows/python
+thirdparty/windows/ffmpeg.exe
+thirdparty/windows/ffprobe.exe
+thirdparty/windows/yt-dlp.exe
+build
+build-win
+_CPack_Packages
+yt-dlp-beets*.AppImage
+yt-dlp-beets*.exe
