@@ -8,9 +8,26 @@
 #include <iostream>
 #include <atomic>
 #include "imgui_additions.hpp"
+#include "yt-dlp.hpp"
 
 App::App()
 {
+    for (size_t i = 0; i < sizeof(state.download.urlBuffer); i++)
+    {
+        state.download.urlBuffer[i] = '\0';
+    }
+    for (size_t i = 0; i < sizeof(state.download.flagsBuffer); i++)
+    {
+        state.download.flagsBuffer[i] = '\0';
+    }
+    for (size_t i = 0; i < sizeof(state.download.playlist.selectionBuffer); i++)
+    {
+        state.download.playlist.selectionBuffer[i] = '\0';
+    }
+
+    state.audioDir = Utils::getMusicDir();
+    state.videoDir = Utils::getVideosDir();
+    state.tempAudioDir = std::filesystem::path(Utils::getDownloadsDir()) / "Music";
 }
 
 App::~App()
@@ -95,6 +112,11 @@ int App::run(int argc, char **argv, std::filesystem::path logFile)
         {
             Utils::runInteractiveTerminal(state.startCmdline);
             state.startCommand = false;
+        }
+        if (state.download.start)
+        {
+            yt_dlp_utils::donwload(state);
+            state.download.start = false;
         }
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }

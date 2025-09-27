@@ -3,6 +3,7 @@
 #include <string>
 #include "Utils.hpp"
 #include "python_setup.hpp"
+#include "yt-dlp.hpp"
 
 void GUI::render(AppState &state)
 {
@@ -30,21 +31,15 @@ void GUI::render(AppState &state)
     ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0);
     ImGui::SetNextWindowPos(mainImGuiWindowPos);
     ImGui::SetNextWindowSize(mainImGuiWindowSize);
-    if (!ImGui::Begin("main", nullptr, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize))
+    if (ImGui::Begin("main", nullptr, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize))
     {
-        return;
+        renderMain(state);
+
+        ImGui::End();
+        ImGui::PopStyleVar();
     }
 
-    if (ImGui::Button("start beets"))
-    {
-        auto python = PythonSetup::getPythonPath();
-        state.startCmdline = "\"" + python.string() + "\" -m beets import ~/Documents/Non-Album";
-        // state.startCmdline = "echo Hi";
-        state.startCommand = true;
-    }
-
-    ImGui::End();
-    ImGui::PopStyleVar();
+    renderPlayListOptions(state);
 }
 
 void GUI::renderMenuBar(AppState &state)
@@ -125,4 +120,56 @@ void GUI::renderErrorLogPopup(AppState &state)
         ImGui::SetItemDefaultFocus();
         ImGui::EndPopup();
     }
+}
+
+void GUI::renderMain(AppState &state)
+{
+    ImGui::Text("Input URL:");
+    ImGui::SameLine();
+    ImGui::InputText("##Input_URL", state.download.urlBuffer, sizeof(state.download.urlBuffer) - 1);
+
+    ImGui::Checkbox("Audio only", &state.download.audioOnly);
+
+    ImGui::Text("yt-dlp flags:");
+    ImGui::SameLine();
+    ImGui::InputText("##yt-dlp_flags", state.download.flagsBuffer, sizeof(state.download.flagsBuffer) - 1);
+
+    if (ImGui::Button("Playlist options"))
+    {
+        state.download.showplaylistOptions = true;
+    }
+
+    if (ImGui::Button("Download"))
+    {
+        state.download.start = true;
+    }
+}
+
+void GUI::renderPlayListOptions(AppState &state)
+{
+    if (state.download.showplaylistOptions)
+    {
+        ImGui::OpenPopup("playlist");
+        state.download.showplaylistOptions = false;
+        yt_dlp_utils::parseDownloadState(state);
+    }
+    if (!ImGui::BeginPopupModal("playlist", nullptr, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_AlwaysAutoResize))
+    {
+        return;
+    }
+
+    ImGui::Checkbox("Do not download playlist", &state.download.playlist.noPlaylist);
+
+    ImGui::Text("Selection:");
+    ImGui::SameLine();
+    ImGui::InputText("##playlist_selection", state.download.playlist.selectionBuffer, sizeof(state.download.playlist.selectionBuffer));
+
+    if (ImGui::Button("Save", ImVec2(120, 0)))
+    {
+        ImGui::CloseCurrentPopup();
+        yt_dlp_utils::saveFlagsFromState(state);
+    }
+
+    ImGui::SetItemDefaultFocus();
+    ImGui::EndPopup();
 }

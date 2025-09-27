@@ -19,6 +19,58 @@
 namespace Utils
 {
 
+// Windows helper
+#ifdef _WIN32
+    std::string getKnownFolder(REFKNOWNFOLDERID folderId)
+    {
+        PWSTR path = nullptr;
+        if (SUCCEEDED(SHGetKnownFolderPath(folderId, 0, nullptr, &path)))
+        {
+            char buffer[MAX_PATH];
+            wcstombs(buffer, path, MAX_PATH);
+            CoTaskMemFree(path);
+            return std::string(buffer);
+        }
+        return {};
+    }
+#endif
+
+    std::string getVideosDir()
+    {
+#ifdef _WIN32
+        return getKnownFolder(FOLDERID_Videos);
+#else
+        const char *home = std::getenv("HOME");
+        if (!home)
+            home = "";
+        return std::filesystem::path(home) / "Videos";
+#endif
+    }
+
+    std::string getMusicDir()
+    {
+#ifdef _WIN32
+        return getKnownFolder(FOLDERID_Music);
+#else
+        const char *home = std::getenv("HOME");
+        if (!home)
+            home = "";
+        return std::filesystem::path(home) / "Music";
+#endif
+    }
+
+    std::string getDownloadsDir()
+    {
+#ifdef _WIN32
+        return getKnownFolder(FOLDERID_Downloads);
+#else
+        const char *home = std::getenv("HOME");
+        if (!home)
+            home = "";
+        return std::filesystem::path(home) / "Downloads";
+#endif
+    }
+
     std::filesystem::path GetExecutableDir()
     {
         std::filesystem::path exeDir;
@@ -168,25 +220,37 @@ namespace Utils
         return true;
     }
 
-    bool runInteractiveTerminal(const std::string &command) {
-    #if defined(_WIN32) || defined(_WIN64)
+    bool runInteractiveTerminal(const std::string &command)
+    {
+#if defined(_WIN32)
         // Windows: start a new cmd window for interactive use
-        std::string fullCmd = "start cmd /K \"" + command + "\"";
+        std::string fullCmd = "cmd /C \"" + command + "\"";
         return std::system(fullCmd.c_str()) == 0;
 
-    #elif defined(__linux__)
+#elif defined(__linux__)
         // Linux: try common terminals
-        const char* terminals[] = {"gnome-terminal", "konsole", "xterm", nullptr};
-        for (int i = 0; terminals[i] != nullptr; ++i) {
+        const char *terminals[] = {"gnome-terminal", "konsole", "xterm", nullptr};
+        for (int i = 0; terminals[i] != nullptr; ++i)
+        {
             std::string fullCmd = std::string(terminals[i]) + " -- " + command + " &";
-            if (std::system(fullCmd.c_str()) == 0) return true;
+            if (std::system(fullCmd.c_str()) == 0)
+                return true;
         }
         std::cerr << "No supported terminal emulator found.\n";
         return false;
-    #else
+#else
         std::cerr << "Unsupported platform.\n";
         return false;
-    #endif
+#endif
+    }
+
+    std::filesystem::path GetBundledExePath(const std::string &name)
+    {
+#ifdef _WIN32
+        return GetExecutableDir() / "bin" / (name + ".exe");
+#else
+        return name;
+#endif
     }
 
 } // namespace Utils

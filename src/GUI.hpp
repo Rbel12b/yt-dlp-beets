@@ -15,6 +15,8 @@ public:
 private:
     void renderMenuBar(AppState& state);
     void renderErrorLogPopup(AppState& state);
+    void renderMain(AppState& state);
+    void renderPlayListOptions(AppState& state);
 };
 
 #endif // GUI_H

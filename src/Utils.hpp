@@ -6,8 +6,25 @@
 #include <string>
 #include <filesystem>
 
+#ifdef _WIN32
+#include <windows.h>
+#include <shlobj.h> // For SHGetKnownFolderPath
+#include <combaseapi.h> // CoTaskMemFree
+#else
+#include <cstdlib>
+#endif
+
 namespace Utils
 {
+
+// Windows helper
+#ifdef _WIN32
+    std::string getKnownFolder(REFKNOWNFOLDERID folderId);
+#endif
+
+    std::string getVideosDir();
+    std::string getMusicDir();
+    std::string getDownloadsDir();
 
     // Returns the absolute path of the running executable
     std::filesystem::path GetExecutableDir();
@@ -30,6 +47,8 @@ namespace Utils
     bool LoadFileToString(const std::string &path, std::string &out);
 
     bool runInteractiveTerminal(const std::string &command);
+
+    std::filesystem::path GetBundledExePath(const std::string &name);
 }
 
 #endif // UTILS_HPP
