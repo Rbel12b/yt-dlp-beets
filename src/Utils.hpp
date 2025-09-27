@@ -21,6 +21,11 @@ namespace Utils
     // url: remote file URL
     // dest: local path to save the file
     bool DownloadFile(const std::string &url, const std::filesystem::path &dest);
+
+    // Cross-platform command execution
+    // Windows: hides console windows
+    // Linux/macOS: runs via system()
+    int RunCommand(const std::string& cmd);
 }
 
 #endif // UTILS_HPP

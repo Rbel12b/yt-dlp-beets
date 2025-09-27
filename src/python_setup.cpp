@@ -27,15 +27,46 @@ namespace PythonSetup
         {
             std::string cmd;
 #ifdef _WIN32
+            fs::path getPip = dataDir / "get-pip.py";
+            if (!fs::exists(getPip))
+            {
+                std::string url = "https://bootstrap.pypa.io/get-pip.py";
+                if (!Utils::DownloadFile(url, getPip.string()))
+                {
+                    std::cerr << "Failed to download get-pip.py\n";
+                    return;
+                }
+            }
+
+            cmd = "\"" + pythonExe.string() + "\" \"" + getPip.string() + "\" --user";
+            std::cout << "Installing pip: " << cmd << std::endl;
+            if (Utils::RunCommand(cmd) != 0)
+            {
+                std::cerr << "Failed to install pip\n";
+                return;
+            }
+
+            // Mark pip as installed
+            std::ofstream marker(pipMarker);
+            marker << "pip installed";
+
+            cmd = "\"" + pythonExe.string() + "\" -m pip install --user virtualenv";
+            std::cout << "Installing virtualenv: " << cmd << std::endl;
+            if (Utils::RunCommand(cmd) != 0)
+            {
+                std::cerr << "Failed to install virtualenv\n";
+                return;
+            }
+
             // Wrap both the python path and the venv path in quotes using cmd /C
-            cmd = "cmd /C \"\\\"" + pythonExe.string() + "\\\" -m venv \\\"" + venvDir.string() + "\\\"\"";
+            cmd = "\"" + pythonExe.string() + "\" -m virtualenv \"" + venvDir.string() + "\"";
 #else
             // Linux/macOS: normal quotes work
             cmd = "\"" + pythonExe.string() + "\" -m venv \"" + venvDir.string() + "\"";
 #endif
 
             std::cout << "Creating virtualenv: " << cmd << std::endl;
-            if (system(cmd.c_str()) != 0)
+            if (Utils::RunCommand(cmd) != 0)
             {
                 std::cerr << "Failed to create virtual environment\n";
                 return;
@@ -63,18 +94,17 @@ namespace PythonSetup
                     return;
                 }
             }
-            std::string cmd = "\"" + venvPython.string() + "\" \"" + getPip.string() + "\" --user";
+            std::string cmd = "\"" + venvPython.string() + "\" \"" + getPip.string() + "\"";
 #else
             // Linux: system python venv already has ensurepip
             std::string cmd = "\"" + venvPython.string() + "\" -m ensurepip";
 #endif
             std::cout << "Installing pip: " << cmd << std::endl;
-            if (system(cmd.c_str()) != 0)
+            if (Utils::RunCommand(cmd) != 0)
             {
                 std::cerr << "Failed to install pip\n";
                 return;
             }
-
             // Mark pip as installed
             std::ofstream marker(pipMarker);
             marker << "pip installed";
@@ -84,7 +114,7 @@ namespace PythonSetup
         std::string beetsCmd = "\"" + venvPython.string() + "\" -m pip install --upgrade pip "
                                                             "beets[fetchart,lyrics,mbsubmit,embedart,chroma]";
         std::cout << "Installing beets: " << beetsCmd << std::endl;
-        if (system(beetsCmd.c_str()) != 0)
+        if (Utils::RunCommand(beetsCmd) != 0)
         {
             std::cerr << "Failed to install beets\n";
             return;

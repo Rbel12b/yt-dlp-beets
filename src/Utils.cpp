@@ -83,4 +83,49 @@ namespace Utils
         return ret == 0;
     }
 
+    int RunCommand(const std::string& cmd) {
+#ifdef _WIN32
+        STARTUPINFOA si;
+        PROCESS_INFORMATION pi;
+        ZeroMemory(&si, sizeof(si));
+        ZeroMemory(&pi, sizeof(pi));
+        si.cb = sizeof(si);
+        si.dwFlags = STARTF_USESHOWWINDOW;
+        si.wShowWindow = SW_HIDE;
+
+        // Mutable command buffer
+        std::string fullCmd = "cmd /C \"" + cmd + "\"";
+        char* cmdline = fullCmd.data();
+
+        BOOL ok = CreateProcessA(
+            nullptr,
+            cmdline,
+            nullptr,
+            nullptr,
+            FALSE,
+            CREATE_NO_WINDOW,
+            nullptr,
+            nullptr,
+            &si,
+            &pi
+        );
+
+        if (!ok) {
+            return -1; // could not start process
+        }
+
+        WaitForSingleObject(pi.hProcess, INFINITE);
+
+        DWORD exitCode = 0;
+        GetExitCodeProcess(pi.hProcess, &exitCode);
+
+        CloseHandle(pi.hProcess);
+        CloseHandle(pi.hThread);
+
+        return static_cast<int>(exitCode);
+#else
+        return system(cmd.c_str());
+#endif
+    }
+
 } // namespace Utils
