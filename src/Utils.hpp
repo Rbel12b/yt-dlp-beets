@@ -25,7 +25,9 @@ namespace Utils
     // Cross-platform command execution
     // Windows: hides console windows
     // Linux/macOS: runs via system()
-    int RunCommand(const std::string& cmd);
+    int RunCommand(const std::string &cmd);
+
+    bool LoadFileToString(const std::string &path, std::string &out);
 }
 
 #endif // UTILS_HPP

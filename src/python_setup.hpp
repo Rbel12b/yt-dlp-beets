@@ -7,7 +7,7 @@
 namespace PythonSetup
 {
     // pythonExe: path to embedded python on Windows, system python on Linux
-    void SetupPythonEnv(const std::filesystem::path &pythonExe);
+    int SetupPythonEnv(const std::filesystem::path &pythonExe);
     std::filesystem::path getPythonPath();
 };
 

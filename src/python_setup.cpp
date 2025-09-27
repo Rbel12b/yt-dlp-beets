@@ -16,7 +16,7 @@ namespace fs = std::filesystem;
 namespace PythonSetup
 {
 
-    void SetupPythonEnv(const fs::path &pythonExe)
+    int SetupPythonEnv(const fs::path &pythonExe)
     {
         fs::path dataDir = Utils::GetUserDataDir();
         fs::path venvDir = dataDir / "venv";
@@ -34,7 +34,7 @@ namespace PythonSetup
                 if (!Utils::DownloadFile(url, getPip.string()))
                 {
                     std::cerr << "Failed to download get-pip.py\n";
-                    return;
+                    return 1;
                 }
             }
 
@@ -43,7 +43,7 @@ namespace PythonSetup
             if (Utils::RunCommand(cmd) != 0)
             {
                 std::cerr << "Failed to install pip\n";
-                return;
+                return 1;
             }
 
             // Mark pip as installed
@@ -55,7 +55,7 @@ namespace PythonSetup
             if (Utils::RunCommand(cmd) != 0)
             {
                 std::cerr << "Failed to install virtualenv\n";
-                return;
+                return 1;
             }
 
             // Wrap both the python path and the venv path in quotes using cmd /C
@@ -69,7 +69,7 @@ namespace PythonSetup
             if (Utils::RunCommand(cmd) != 0)
             {
                 std::cerr << "Failed to create virtual environment\n";
-                return;
+                return 1;
             }
         }
 
@@ -91,7 +91,7 @@ namespace PythonSetup
                 if (!Utils::DownloadFile(url, getPip.string()))
                 {
                     std::cerr << "Failed to download get-pip.py\n";
-                    return;
+                    return 1;
                 }
             }
             std::string cmd = "\"" + venvPython.string() + "\" \"" + getPip.string() + "\"";
@@ -103,7 +103,7 @@ namespace PythonSetup
             if (Utils::RunCommand(cmd) != 0)
             {
                 std::cerr << "Failed to install pip\n";
-                return;
+                return 1;
             }
             // Mark pip as installed
             std::ofstream marker(pipMarker);
@@ -112,15 +112,16 @@ namespace PythonSetup
 
         // 3. Install beets with extras
         std::string beetsCmd = "\"" + venvPython.string() + "\" -m pip install --upgrade pip "
-                                                            "beets[fetchart,lyrics,mbsubmit,embedart,chroma]";
+                                                            "beets[fetchart,lyrics,embedart,chroma]";
         std::cout << "Installing beets: " << beetsCmd << std::endl;
         if (Utils::RunCommand(beetsCmd) != 0)
         {
             std::cerr << "Failed to install beets\n";
-            return;
+            return 1;
         }
 
         std::cout << "Python environment is ready in: " << venvDir << std::endl;
+        return 0;
     }
 
     fs::path getPythonPath()

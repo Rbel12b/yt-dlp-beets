@@ -10,10 +10,11 @@ class GUI
 public:
     GUI() = default;
     ~GUI() = default;
-    void render(const AppState& state);
+    void render(AppState& state);
 
 private:
     void renderMenuBar(const AppState& state);
+    void renderErrorLogPopup(AppState& state);
 };
 
 #endif // GUI_H

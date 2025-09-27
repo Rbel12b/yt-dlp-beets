@@ -2,10 +2,12 @@
 #include "Utils.hpp"
 #include <filesystem>
 #include <cstdlib>
+#include <fstream>
 
 #ifdef _WIN32
 #include <windows.h>
 #include <shlobj.h>
+#include <io.h>
 #else
 #include <unistd.h>
 #include <sys/types.h>
@@ -79,39 +81,61 @@ namespace Utils
     bool DownloadFile(const std::string &url, const std::filesystem::path &dest)
     {
         std::string cmd = "curl -L -o \"" + dest.string() + "\" \"" + url + "\"";
-        int ret = system(cmd.c_str());
+        int ret = RunCommand(cmd);
         return ret == 0;
     }
 
-    int RunCommand(const std::string& cmd) {
+    int RunCommand(const std::string &cmd)
+    {
 #ifdef _WIN32
         STARTUPINFOA si;
         PROCESS_INFORMATION pi;
         ZeroMemory(&si, sizeof(si));
         ZeroMemory(&pi, sizeof(pi));
         si.cb = sizeof(si);
-        si.dwFlags = STARTF_USESHOWWINDOW;
+        si.dwFlags = STARTF_USESHOWWINDOW | STARTF_USESTDHANDLES;
         si.wShowWindow = SW_HIDE;
+
+        // Get underlying OS handles from the C runtime FILE*
+        HANDLE hStdOut = (HANDLE)_get_osfhandle(_fileno(stdout));
+        HANDLE hStdErr = (HANDLE)_get_osfhandle(_fileno(stderr));
+
+        // Duplicate as inheritable
+        HANDLE hOutInherit = NULL, hErrInherit = NULL;
+        DuplicateHandle(GetCurrentProcess(), hStdOut,
+                        GetCurrentProcess(), &hOutInherit,
+                        0, TRUE, DUPLICATE_SAME_ACCESS);
+        DuplicateHandle(GetCurrentProcess(), hStdErr,
+                        GetCurrentProcess(), &hErrInherit,
+                        0, TRUE, DUPLICATE_SAME_ACCESS);
+
+        si.hStdOutput = hOutInherit;
+        si.hStdError = hErrInherit;
+        si.hStdInput = GetStdHandle(STD_INPUT_HANDLE);
 
         // Mutable command buffer
         std::string fullCmd = "cmd /C \"" + cmd + "\"";
-        char* cmdline = fullCmd.data();
+        char *cmdline = fullCmd.data();
 
         BOOL ok = CreateProcessA(
             nullptr,
             cmdline,
             nullptr,
             nullptr,
-            FALSE,
+            TRUE, // allow handle inheritance
             CREATE_NO_WINDOW,
             nullptr,
             nullptr,
             &si,
-            &pi
-        );
+            &pi);
 
-        if (!ok) {
-            return -1; // could not start process
+        if (!ok)
+        {
+            if (hOutInherit)
+                CloseHandle(hOutInherit);
+            if (hErrInherit)
+                CloseHandle(hErrInherit);
+            return -1;
         }
 
         WaitForSingleObject(pi.hProcess, INFINITE);
@@ -122,10 +146,25 @@ namespace Utils
         CloseHandle(pi.hProcess);
         CloseHandle(pi.hThread);
 
+        // Close inherited handles (parent side copies)
+        if (hOutInherit)
+            CloseHandle(hOutInherit);
+        if (hErrInherit)
+            CloseHandle(hErrInherit);
+
         return static_cast<int>(exitCode);
 #else
         return system(cmd.c_str());
 #endif
+    }
+
+    bool LoadFileToString(const std::string &path, std::string &out)
+    {
+        std::ifstream ifs(path, std::ios::in | std::ios::binary);
+        if (!ifs)
+            return false;
+        out.assign((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
+        return true;
     }
 
 } // namespace Utils

@@ -11,7 +11,7 @@ public:
     App();
     ~App();
 
-    int run(int argc, char **argv);
+    int run(int argc, char **argv, std::filesystem::path logFile);
 
 private:
     void render();

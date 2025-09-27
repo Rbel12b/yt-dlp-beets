@@ -39,7 +39,7 @@ void App::render()
     gui.render(state);
 }
 
-void App::keyCallback(const SDL_KeyboardEvent& keyEvent)
+void App::keyCallback(const SDL_KeyboardEvent &keyEvent)
 {
     if (keyEvent.type == SDL_KEYDOWN)
     {
@@ -50,8 +50,9 @@ void App::keyCallback(const SDL_KeyboardEvent& keyEvent)
     }
 }
 
-int App::run(int argc, char **argv)
+int App::run(int argc, char **argv, std::filesystem::path logFile)
 {
+    state.logFile = logFile;
     std::filesystem::path exeDir = Utils::GetExecutableDir();
     try
     {
@@ -80,7 +81,12 @@ int App::run(int argc, char **argv)
         if (!state.pythonSetupComplete)
         {
             state.pythonSetupInProgress = true;
-            PythonSetup::SetupPythonEnv(pythonExe);
+            if (PythonSetup::SetupPythonEnv(pythonExe) != 0)
+            {
+                state.errorShowLog = true;
+                state.pythonSetupInProgress = false;
+                break; // Failed to setup python
+            }
             pythonPath = PythonSetup::getPythonPath();
             state.pythonSetupInProgress = false;
             state.pythonSetupComplete = true;

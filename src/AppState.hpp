@@ -4,6 +4,8 @@
 
 #include "imgui.h"
 #include "SDL2/SDL.h"
+#include <filesystem>
+#include <string>
 
 struct AppState
 {
@@ -13,6 +15,9 @@ struct AppState
 
     bool pythonSetupComplete = false;
     bool pythonSetupInProgress = false;
+
+    bool errorShowLog = false;
+    std::filesystem::path logFile;
 };
 
 #endif // APP_STATE_H
