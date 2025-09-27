@@ -10,8 +10,6 @@ project(${APP_NAME} VERSION ${VERSION_STRING} LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-file(GLOB_RECURSE SOURCES CONFIGURE_DEPENDS src/*.cpp)
-
 # --- User-configurable variables ---
 set(APP_ICON_PNG    "${CMAKE_SOURCE_DIR}/resources/${APP_NAME}.png")  # master PNG 1024×1024
 
@@ -31,10 +29,32 @@ set(DESKTOP_TEMPLATE_OUT "${CMAKE_BINARY_DIR}/${APP_NAME}.desktop")
 set(WINDOWS_ICON_RESOURCE_IN "${CMAKE_SOURCE_DIR}/resources/${APP_NAME}.rc.in")
 set(WINDOWS_ICON_RESOURCE_OUT "${CMAKE_BINARY_DIR}/${APP_NAME}.rc")
 
-# Create icon output directory
-file(MAKE_DIRECTORY ${ICON_DIR})
+# --- Find dependencies ---
+file(GLOB_RECURSE SOURCES CONFIGURE_DEPENDS src/*.cpp)
+
+# --- Add to target executable ---
+if(WIN32)
+  add_executable(${APP_EXECUTABLE} ${SOURCES} ${WINDOWS_ICON_RESOURCE_OUT})
+else()
+  add_executable(${APP_EXECUTABLE} ${SOURCES})
+endif()
+
+# --- Libraries ---
+
+set(IMGUI_SOURCE_DIR "${CMAKE_SOURCE_DIR}/thirdparty/lib/imgui")
+set(DearImGui_Backend_SDLRenderer2 ON)
+set(DearImGui_Backend_SDL2 ON)
+
+add_subdirectory(${CMAKE_SOURCE_DIR}/thirdparty/lib/CMakeForImGui EXCLUDE_FROM_ALL)
+
+find_package(SDL2 CONFIG REQUIRED)
+
+target_link_libraries(${APP_EXECUTABLE} PRIVATE imgui_core imgui_impl_sdl2 imgui_impl_sdlrenderer2 SDL2::SDL2)
 
 # --- Custom commands: generate icons ---
+
+# Create icon output directory
+file(MAKE_DIRECTORY ${ICON_DIR})
 
 # 1. Copy master PNG (so it’s available for desktop entry/Icon= path)
 add_custom_command(
@@ -44,14 +64,14 @@ add_custom_command(
   COMMENT "Copy master icon PNG"
 )
 
-# 2. Generate PNGs for Linux sizes (using ImageMagick convert)
+# 2. Generate PNGs for Linux sizes
 add_custom_command(
   OUTPUT ${APP_ICON_LINUX_16} ${APP_ICON_LINUX_32} ${APP_ICON_LINUX_48} ${APP_ICON_LINUX_128} ${APP_ICON_LINUX_256}
-  COMMAND convert ${APP_ICON_PNG} -resize 16x16  ${APP_ICON_LINUX_16}
-  COMMAND convert ${APP_ICON_PNG} -resize 32x32  ${APP_ICON_LINUX_32}
-  COMMAND convert ${APP_ICON_PNG} -resize 48x48  ${APP_ICON_LINUX_48}
-  COMMAND convert ${APP_ICON_PNG} -resize 128x128 ${APP_ICON_LINUX_128}
-  COMMAND convert ${APP_ICON_PNG} -resize 256x256 ${APP_ICON_LINUX_256}
+  COMMAND magick ${APP_ICON_PNG} -resize 16x16  ${APP_ICON_LINUX_16}
+  COMMAND magick ${APP_ICON_PNG} -resize 32x32  ${APP_ICON_LINUX_32}
+  COMMAND magick ${APP_ICON_PNG} -resize 48x48  ${APP_ICON_LINUX_48}
+  COMMAND magick ${APP_ICON_PNG} -resize 128x128 ${APP_ICON_LINUX_128}
+  COMMAND magick ${APP_ICON_PNG} -resize 256x256 ${APP_ICON_LINUX_256}
   DEPENDS ${APP_ICON_PNG}
   COMMENT "Generating Linux icon pngs"
 )
@@ -59,7 +79,7 @@ add_custom_command(
 # 3. Generate .ico for Windows (multi-resolution)
 add_custom_command(
   OUTPUT ${APP_ICON_ICO}
-  COMMAND convert ${APP_ICON_LINUX_16} ${APP_ICON_LINUX_32} ${APP_ICON_LINUX_48} ${APP_ICON_LINUX_256}
+  COMMAND magick ${APP_ICON_LINUX_16} ${APP_ICON_LINUX_32} ${APP_ICON_LINUX_48} ${APP_ICON_LINUX_256}
           ${APP_ICON_ICO}
   DEPENDS ${APP_ICON_LINUX_16} ${APP_ICON_LINUX_32} ${APP_ICON_LINUX_48} ${APP_ICON_LINUX_256}
   COMMENT "Generating Windows .ico"
@@ -77,16 +97,6 @@ configure_file(
   ${WINDOWS_ICON_RESOURCE_OUT}
   @ONLY
 )
-
-# --- Add to target executable ---
-
-if(WIN32)
-  # For Windows, embed icon via resource script (assuming you have one or embed .ico)
-  
-  add_executable(${APP_EXECUTABLE} WIN32 ${SOURCES} ${WINDOWS_ICON_RESOURCE_OUT})
-else()
-  add_executable(${APP_EXECUTABLE} ${SOURCES})
-endif()
 
 # --- Ensure icon generation happens before build ---
 add_custom_target(generate_icons ALL
@@ -132,6 +142,15 @@ if(WIN32)
         DESTINATION bin
     )
     install(DIRECTORY ${CMAKE_SOURCE_DIR}/thirdparty/windows/python/ DESTINATION python)
+
+    # Path to the SDL2 runtime DLL
+    find_file(SDL2_DLL NAMES SDL2.dll PATHS ${SDL2_DIR} PATH_SUFFIXES bin)
+
+    if(SDL2_DLL)
+        install(FILES ${SDL2_DLL} DESTINATION .)
+    else()
+        message(WARNING "SDL2.dll not found — you need to set SDL2_DIR or copy manually")
+    endif()
 endif()
 
 # --- CPack configuration ---
@@ -141,6 +160,7 @@ set(CPACK_PACKAGE_VERSION "${PROJECT_VERSION}")
 set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "GUI wrapper for yt-dlp integrated with beets")
 set(CPACK_PACKAGE_CONTACT "")
 set(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_SOURCE_DIR}/LICENSE")
+set(CPACK_THREADS 0)
 
 # Install all license files to a "licenses" folder inside installation dir
 install(DIRECTORY "${CMAKE_SOURCE_DIR}/thirdparty/licenses/"

@@ -36,8 +36,10 @@ DESKTOP_SRC="$BUILD_DIR/${APP}.desktop"
 DESKTOP_DST="$APPDIR/usr/share/applications/${APP}.desktop"
 cp "$DESKTOP_SRC" "$DESKTOP_DST"
 
+export STRIP=/usr/bin/strip
+
 # 8. Run linuxdeploy + appimagetool
-linuxdeploy --appdir "$APPDIR" \
+STRIP=/usr/bin/strip linuxdeploy --appdir "$APPDIR" \
   -d "$DESKTOP_DST" \
   -i "$ICON_DST" \
   --output appimage
