@@ -17,20 +17,17 @@ App::~App()
 {
 }
 
-std::atomic<bool> python_setup_done = false;
-
 void App::render()
 {
-    auto mainWindowSize = renderer.getWindowSize();
+    state.mainWindowSize = renderer.getWindowSize();
 
-    if (!python_setup_done)
+    if (state.pythonSetupInProgress)
     {
         ImVec2 windowSize = ImVec2(300, 100);
-        ImGui::SetNextWindowPos(ImVec2((mainWindowSize.x - windowSize.x) * 0.5f, (mainWindowSize.y - windowSize.y) * 0.5f), ImGuiCond_Always);
+        ImGui::SetNextWindowPos(ImVec2((state.mainWindowSize.x - windowSize.x) * 0.5f, (state.mainWindowSize.y - windowSize.y) * 0.5f), ImGuiCond_Always);
         ImGui::SetNextWindowSize(windowSize, ImGuiCond_Always);
-        ImGui::Begin("Setup", nullptr, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse |
-            ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoTitleBar);
-        const char* text = "Setting up Python environment...";
+        ImGui::Begin("Setup", nullptr, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoTitleBar);
+        const char *text = "Setting up Python environment...";
         auto textSize = ImGui::CalcTextSize(text);
         ImGui::SetCursorPos(ImVec2((windowSize.x - textSize.x) * 0.5f, (windowSize.y - textSize.y) * 0.5f - 10));
         ImGui::Text("Setting up Python environment...");
@@ -39,7 +36,18 @@ void App::render()
         ImGui::End();
         return;
     }
-    ImGui::ShowDemoWindow(nullptr);
+    gui.render(state);
+}
+
+void App::keyCallback(const SDL_KeyboardEvent& keyEvent)
+{
+    if (keyEvent.type == SDL_KEYDOWN)
+    {
+        if (keyEvent.keysym.sym == SDLK_F4 && (keyEvent.keysym.mod & KMOD_ALT))
+        {
+            state.progamShouldExit = true;
+        }
+    }
 }
 
 int App::run(int argc, char **argv)
@@ -62,20 +70,25 @@ int App::run(int argc, char **argv)
     std::filesystem::path pythonPath = "";
 
     renderer.setRenderFunction(std::bind(&App::render, this));
+    renderer.setKeyCallback(std::bind(&App::keyCallback, this, std::placeholders::_1));
 
-    if (renderer.startRenderLoop() != 0)
+    if (renderer.startRenderLoop(&state) != 0)
         return -1; // Failed to start render loop
 
     while (renderer.isRunning())
     {
-        if (!python_setup_done)
+        if (!state.pythonSetupComplete)
         {
+            state.pythonSetupInProgress = true;
             PythonSetup::SetupPythonEnv(pythonExe);
             pythonPath = PythonSetup::getPythonPath();
-            python_setup_done = true;
+            state.pythonSetupInProgress = false;
+            state.pythonSetupComplete = true;
         }
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
+
+    renderer.join();
 
     return 0;
 }

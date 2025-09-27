@@ -41,6 +41,11 @@ void Renderer::setRenderFunction(std::function<void()> func)
     renderFunction = func;
 }
 
+void Renderer::setKeyCallback(std::function<void(const SDL_KeyboardEvent&)> func)
+{
+    keyCallBack = func;
+}
+
 int Renderer::setup()
 {
     if (initialized)
@@ -143,11 +148,12 @@ void Renderer::endFrame()
     SDL_RenderPresent(renderer);
 }
 
-int Renderer::startRenderLoop()
+int Renderer::startRenderLoop(AppState* _state)
 {
     if (running)
         return -1; // Already running
 
+    state = _state;
     running = true;
     renderThread = std::thread(&Renderer::renderLoop, this);
     return 0;
@@ -165,6 +171,11 @@ int Renderer::renderLoop()
     SDL_Event event;
     while (running && !done)
     {
+        if (state && state->progamShouldExit)
+        {
+            done = true;
+            break;
+        }
         // Poll and handle events (inputs, window resize, etc.)
         while (SDL_PollEvent(&event))
         {
@@ -173,6 +184,11 @@ int Renderer::renderLoop()
                 done = true;
             if (event.type == SDL_WINDOWEVENT && event.window.event == SDL_WINDOWEVENT_CLOSE && event.window.windowID == SDL_GetWindowID(window))
                 done = true;
+            if (event.type == SDL_KEYDOWN || event.type == SDL_KEYUP)
+            {
+                if (keyCallBack)
+                    keyCallBack(event.key);
+            }
         }
         if (SDL_GetWindowFlags(window) & SDL_WINDOW_MINIMIZED)
         {

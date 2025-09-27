@@ -1,0 +1,19 @@
+#pragma once
+#ifndef GUI_H
+#define GUI_H
+
+#include "imgui.h"
+#include "AppState.hpp"
+
+class GUI
+{
+public:
+    GUI() = default;
+    ~GUI() = default;
+    void render(const AppState& state);
+
+private:
+    void renderMenuBar(const AppState& state);
+};
+
+#endif // GUI_H

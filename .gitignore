@@ -7,3 +7,4 @@ _CPack_Packages
 yt-dlp-beets*.AppImage
 yt-dlp-beets*.exe
 .vscode/settings.json
+resources/yt-dlp-gui.pyw

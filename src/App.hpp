@@ -2,12 +2,11 @@
 #ifndef APP_H
 #define APP_H
 #include "Renderer.hpp"
-
-void render();
+#include "GUI.hpp"
+#include "AppState.hpp"
 
 class App
 {
-    friend void render();
 public:
     App();
     ~App();
@@ -16,8 +15,12 @@ public:
 
 private:
     void render();
+    void keyCallback(const SDL_KeyboardEvent&);
 
     Renderer renderer;
+    GUI gui;
+
+    AppState state;
 };
 
 #endif // APP_H
