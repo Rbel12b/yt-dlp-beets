@@ -6,3 +6,4 @@ build-win
 _CPack_Packages
 yt-dlp-beets*.AppImage
 yt-dlp-beets*.exe
+.vscode/settings.json

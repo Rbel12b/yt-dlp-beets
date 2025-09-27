@@ -6,6 +6,7 @@
 #include <thread>
 #include <atomic>
 #include <SDL2/SDL.h>
+#include "imgui.h"
 
 class Renderer
 {
@@ -15,6 +16,8 @@ public:
     void setRenderFunction(std::function<void()> func);
     int startRenderLoop();
     bool isRunning() const { return running; }
+
+    ImVec2 getWindowSize() const;
 
 private:
     int init();
@@ -30,8 +33,8 @@ private:
     bool initialized;
     std::atomic<bool> running;
     std::thread renderThread;
-    SDL_Window* window;
-    SDL_Renderer* renderer;
+    SDL_Window *window;
+    SDL_Renderer *renderer;
 };
 
 #endif // RENDERER_HPP

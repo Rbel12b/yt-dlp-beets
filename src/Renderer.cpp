@@ -6,7 +6,7 @@
 #include <stdio.h>
 #include <SDL2/SDL.h>
 #ifdef _WIN32
-#include <windows.h>        // SetProcessDPIAware()
+#include <windows.h> // SetProcessDPIAware()
 #endif
 
 Renderer::Renderer()
@@ -73,18 +73,19 @@ int Renderer::setup()
     // Setup Dear ImGui context
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
-    ImGuiIO& io = ImGui::GetIO(); (void)io;
-    io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
-    io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
+    ImGuiIO &io = ImGui::GetIO();
+    (void)io;
+    io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard; // Enable Keyboard Controls
+    io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;  // Enable Gamepad Controls
 
     // Setup Dear ImGui style
     ImGui::StyleColorsDark();
-    //ImGui::StyleColorsLight();
+    // ImGui::StyleColorsLight();
 
     // Setup scaling
-    ImGuiStyle& style = ImGui::GetStyle();
-    style.ScaleAllSizes(main_scale);        // Bake a fixed style scale. (until we have a solution for dynamic style scaling, changing this requires resetting Style + calling this again)
-    style.FontScaleDpi = main_scale;        // Set initial font scale. (using io.ConfigDpiScaleFonts=true makes this unnecessary. We leave both here for documentation purpose)
+    ImGuiStyle &style = ImGui::GetStyle();
+    style.ScaleAllSizes(main_scale); // Bake a fixed style scale. (until we have a solution for dynamic style scaling, changing this requires resetting Style + calling this again)
+    style.FontScaleDpi = main_scale; // Set initial font scale. (using io.ConfigDpiScaleFonts=true makes this unnecessary. We leave both here for documentation purpose)
 
     // Setup Platform/Renderer backends
     ImGui_ImplSDL2_InitForSDLRenderer(window, renderer);
@@ -120,18 +121,21 @@ void Renderer::terminate()
 
 void Renderer::beginFrame()
 {
+    int display_w, display_h;
+    SDL_GetWindowSize(window, &display_w, &display_h);
+    ImGuiIO &io = ImGui::GetIO();
+    io.DisplaySize = ImVec2((float)display_w, (float)display_h);
     // Start the Dear ImGui frame
     ImGui_ImplSDLRenderer2_NewFrame();
     ImGui_ImplSDL2_NewFrame();
     ImGui::NewFrame();
-
 }
 
 void Renderer::endFrame()
 {
     // Rendering
     ImGui::Render();
-    ImGuiIO& io = ImGui::GetIO();
+    ImGuiIO &io = ImGui::GetIO();
     SDL_RenderSetScale(renderer, io.DisplayFramebufferScale.x, io.DisplayFramebufferScale.y);
     SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
     SDL_RenderClear(renderer);
@@ -188,4 +192,11 @@ int Renderer::renderLoop()
     running = false;
     terminate();
     return 0;
+}
+
+ImVec2 Renderer::getWindowSize() const
+{
+    int w, h;
+    SDL_GetWindowSize(window, &w, &h);
+    return ImVec2((float)w, (float)h);
 }
