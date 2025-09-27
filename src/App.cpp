@@ -91,6 +91,11 @@ int App::run(int argc, char **argv, std::filesystem::path logFile)
             state.pythonSetupInProgress = false;
             state.pythonSetupComplete = true;
         }
+        if (state.startCommand)
+        {
+            Utils::runInteractiveTerminal(state.startCmdline);
+            state.startCommand = false;
+        }
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
 

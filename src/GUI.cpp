@@ -2,6 +2,7 @@
 #include <vector>
 #include <string>
 #include "Utils.hpp"
+#include "python_setup.hpp"
 
 void GUI::render(AppState &state)
 {
@@ -11,16 +12,49 @@ void GUI::render(AppState &state)
         ImGui::EndMainMenuBar();
     }
     renderErrorLogPopup(state);
+
+    ImVec2 remainingSize = ImVec2(state.mainWindowSize.x, state.mainWindowSize.y - 19);
+    ImVec2 mainImGuiWindowPos(0, state.mainWindowSize.y - remainingSize.y);
+    ImVec2 mainImGuiWindowSize = remainingSize;
+
+    // if (state.processTerm)
+    // {
+    //     ImVec2 terminalImGuiWindowSize = remainingSize;
+    //     terminalImGuiWindowSize.y = terminalImGuiWindowSize.y / 3;
+    //     mainImGuiWindowSize.y -= terminalImGuiWindowSize.y;
+    //     ImGui::SetNextWindowPos(ImVec2(0, mainImGuiWindowPos.y + mainImGuiWindowSize.y));
+    //     ImGui::SetNextWindowSize(terminalImGuiWindowSize);
+    //     state.processTerm->render("Terminal", ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize);
+    // }
+
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0);
+    ImGui::SetNextWindowPos(mainImGuiWindowPos);
+    ImGui::SetNextWindowSize(mainImGuiWindowSize);
+    if (!ImGui::Begin("main", nullptr, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize))
+    {
+        return;
+    }
+
+    if (ImGui::Button("start beets"))
+    {
+        auto python = PythonSetup::getPythonPath();
+        state.startCmdline = "\"" + python.string() + "\" -m beets import ~/Documents/Non-Album";
+        // state.startCmdline = "echo Hi";
+        state.startCommand = true;
+    }
+
+    ImGui::End();
+    ImGui::PopStyleVar();
 }
 
-void GUI::renderMenuBar(const AppState &state)
+void GUI::renderMenuBar(AppState &state)
 {
     if (ImGui::BeginMenu("File"))
     {
         if (ImGui::MenuItem("Exit", "Alt+F4"))
         {
             // Signal the application to exit
-            const_cast<AppState &>(state).progamShouldExit = true;
+            state.progamShouldExit = true;
         }
         ImGui::EndMenu();
     }
@@ -87,7 +121,7 @@ void GUI::renderErrorLogPopup(AppState &state)
         }
 
         ImGui::EndChild();
-        
+
         ImGui::SetItemDefaultFocus();
         ImGui::EndPopup();
     }

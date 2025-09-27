@@ -13,7 +13,7 @@ public:
     void render(AppState& state);
 
 private:
-    void renderMenuBar(const AppState& state);
+    void renderMenuBar(AppState& state);
     void renderErrorLogPopup(AppState& state);
 };
 

@@ -28,6 +28,8 @@ namespace Utils
     int RunCommand(const std::string &cmd);
 
     bool LoadFileToString(const std::string &path, std::string &out);
+
+    bool runInteractiveTerminal(const std::string &command);
 }
 
 #endif // UTILS_HPP

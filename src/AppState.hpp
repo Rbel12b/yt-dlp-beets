@@ -6,6 +6,7 @@
 #include "SDL2/SDL.h"
 #include <filesystem>
 #include <string>
+// #include "process_terminal.hpp"
 
 struct AppState
 {
@@ -18,6 +19,11 @@ struct AppState
 
     bool errorShowLog = false;
     std::filesystem::path logFile;
+
+    bool startCommand = false;
+    std::string startCmdline = "";
+    // ProcessTerminal* processTerm = nullptr;
+
 };
 
 #endif // APP_STATE_H

@@ -3,6 +3,7 @@
 #include <filesystem>
 #include <cstdlib>
 #include <fstream>
+#include <iostream>
 
 #ifdef _WIN32
 #include <windows.h>
@@ -165,6 +166,27 @@ namespace Utils
             return false;
         out.assign((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
         return true;
+    }
+
+    bool runInteractiveTerminal(const std::string &command) {
+    #if defined(_WIN32) || defined(_WIN64)
+        // Windows: start a new cmd window for interactive use
+        std::string fullCmd = "start cmd /K \"" + command + "\"";
+        return std::system(fullCmd.c_str()) == 0;
+
+    #elif defined(__linux__)
+        // Linux: try common terminals
+        const char* terminals[] = {"gnome-terminal", "konsole", "xterm", nullptr};
+        for (int i = 0; terminals[i] != nullptr; ++i) {
+            std::string fullCmd = std::string(terminals[i]) + " -- " + command + " &";
+            if (std::system(fullCmd.c_str()) == 0) return true;
+        }
+        std::cerr << "No supported terminal emulator found.\n";
+        return false;
+    #else
+        std::cerr << "Unsupported platform.\n";
+        return false;
+    #endif
     }
 
 } // namespace Utils
