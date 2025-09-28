@@ -11,6 +11,8 @@
 #include "yt-dlp.hpp"
 #include "portable-file-dialogs.h"
 #include "Beets.hpp"
+#include "Updater.hpp"
+#include "version.def"
 
 App::App()
 {
@@ -30,6 +32,11 @@ App::App()
     state.audioDir = Utils::getMusicDir();
     state.videoDir = Utils::getVideosDir();
     state.tempAudioDir = std::filesystem::path(Utils::getDownloadsDir()) / "Music";
+    std::string versionStr(reinterpret_cast<const char*>(___yt_dlp_beets_version),
+        static_cast<size_t>(___yt_dlp_beets_version_len));
+    state.version = new Version("");
+    (*state.version) = versionStr;
+    state.updater = new Updater();
 }
 
 App::~App()
@@ -115,6 +122,9 @@ int App::run(int argc, char **argv, std::filesystem::path logFile)
             }
             state.pythonSetupInProgress = false;
             state.pythonSetupComplete = true;
+            if (state.updater && state.updater->checkUpdate(state))
+            {
+            }
         }
         if (state.startCommand)
         {

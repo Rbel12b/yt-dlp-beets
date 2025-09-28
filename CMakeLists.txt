@@ -1,9 +1,11 @@
 cmake_minimum_required(VERSION 3.16)
 
 set(APP_NAME        "yt-dlp-beets")
-set(APP_EXECUTABLE  "${APP_NAME}")  # name of your binary
+set(APP_EXECUTABLE  "${APP_NAME}")
+set(VERSION_FILE    "yt-dlp-beets.version")
+set(VERSION_FILE_OUT    "${CMAKE_BINARY_DIR}/version.def")
 
-file(READ ".version" VERSION_STRING)
+file(READ ${VERSION_FILE} VERSION_STRING)
 
 project(${APP_NAME} VERSION ${VERSION_STRING} LANGUAGES CXX)
 
@@ -51,13 +53,21 @@ add_custom_command(
   OUTPUT ${BEETS_CONFIG_OUT}
   COMMAND xxd -i "${BEETS_CONFIG_IN}" > ${BEETS_CONFIG_OUT}
   COMMENT "Generating beets default config"
+  DEPENDS ${BEETS_CONFIG_IN}
 )
 
-add_custom_target(generate_beets_config ALL
-  DEPENDS ${BEETS_CONFIG_OUT}
+add_custom_command(
+  OUTPUT ${VERSION_FILE_OUT}
+  COMMAND xxd -i "../${VERSION_FILE}" > ${VERSION_FILE_OUT}
+  COMMENT "Generating version.def"
+  DEPENDS ${VERSION_FILE}
 )
 
-add_dependencies(${APP_EXECUTABLE} generate_beets_config)
+add_custom_target(generate_embedded_files ALL
+  DEPENDS ${BEETS_CONFIG_OUT} ${VERSION_FILE_OUT}
+)
+
+add_dependencies(${APP_EXECUTABLE} generate_embedded_files)
 
 # --- Libraries ---
 

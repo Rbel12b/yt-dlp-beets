@@ -2,15 +2,24 @@
 #ifndef APP_STATE_H
 #define APP_STATE_H
 
+class AppState;
+
 #include "imgui.h"
 #include "SDL2/SDL.h"
 #include <filesystem>
 #include <string>
 #include <vector>
+#include "Updater.hpp"
 // #include "process_terminal.hpp"
 
-struct AppState
+class AppState
 {
+public:
+    Version* version;
+    bool readyForUpdate = false;
+    std::string repoUrl = "https://github.com/Rbel12b/yt-dlp-beets";
+    Updater* updater;
+
     bool progamShouldExit = false;
 
     ImVec2 mainWindowSize = ImVec2(0, 0);
