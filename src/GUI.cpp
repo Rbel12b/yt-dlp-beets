@@ -54,37 +54,67 @@ void GUI::renderMenuBar(AppState &state)
         }
         ImGui::EndMenu();
     }
+    if (ImGui::BeginMenu("About"))
+    {
+        if (ImGui::MenuItem("Licenses"))
+        {
+            state.showFile.msg = "Licenses:";
+            state.showFile.filePath = Utils::getLicensePath();
+            state.showFile.errorLog = false;
+            state.showFile.enabled = true;
+        }
+        ImGui::MenuItem("Version: ", state.version ? state.version->m_version.c_str() : "unknown", nullptr, false);
+        ImGui::EndMenu();
+    }
 }
 
 void GUI::renderErrorLogPopup(AppState &state)
 {
     static std::string content; // file contents
     static std::vector<char> contentBuf;        // mutable buffer for ImGui InputTextMultiline
+    static std::filesystem::path filePath;
    
-    if (state.errorShowLog)
+    if (state.showFile.enabled)
     {
-        if (!Utils::loadFileToString(state.logFile.string(), content))
-            content = std::string("[Failed to open log file: ") + state.logFile.string() + "]";
+        if (state.showFile.errorLog)
+        {
+            filePath = state.logFile;
+        }
+        else
+        {
+            filePath = state.showFile.filePath;
+        }
+
+        if (!Utils::loadFileToString(filePath.string(), content))
+            content = std::string("[Failed to open file: ") + filePath.string() + "]";
 
         contentBuf.assign(content.begin(), content.end());
         contentBuf.push_back('\0');
-        ImGui::OpenPopup("Error");
-        state.errorShowLog = false; // Only open once
+        ImGui::OpenPopup("showFile");
+        state.showFile.enabled = false; // Only open once
     }
 
-    if (ImGui::BeginPopupModal("Error", nullptr, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse))
+    if (ImGui::BeginPopupModal("showFile", nullptr, ImGuiWindowFlags_AlwaysAutoResize |
+            ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoTitleBar))
     {
-        ImGui::Text("An error occurred. The application will now exit.");
+        if (state.showFile.errorLog)
+        {
+            ImGui::Text("An error occurred. The application will now exit.");
+            ImGui::TextUnformatted("Log file:");
+        }
+        else if (!state.showFile.msg.empty())
+        {
+            ImGui::Text(state.showFile.msg.c_str());
+        }
 
-        ImGui::TextUnformatted("Log file:");
         // Use InputText with read-only so user can easily select and copy the path
         {
             // Prepare a mutable buffer for the path (it's small)
             static std::vector<char> pathBuf;
-            std::string pathStr = state.logFile.string();
+            std::string pathStr = filePath.string();
             pathBuf.assign(pathStr.begin(), pathStr.end());
             pathBuf.push_back('\0');
-            ImGui::InputText("##logpath", pathBuf.data(), pathBuf.size(), ImGuiInputTextFlags_ReadOnly);
+            ImGui::InputText("##showFilePath", pathBuf.data(), pathBuf.size(), ImGuiInputTextFlags_ReadOnly);
             ImGui::SameLine();
             if (ImGui::Button("Copy path"))
             {
@@ -95,25 +125,25 @@ void GUI::renderErrorLogPopup(AppState &state)
         if (ImGui::Button("OK", ImVec2(120, 0)))
         {
             ImGui::CloseCurrentPopup();
-            state.errorShowLog = false;
-            state.progamShouldExit = true; // Signal the application to exit
+            state.showFile.enabled = false;
+            state.progamShouldExit = state.showFile.errorLog; // Signal the application to exit when an error occured
         }
 
         ImGui::Separator();
 
         ImGui::TextUnformatted("Contents:");
-        ImGui::BeginChild("LogContentChild", ImVec2(800, 400), true, ImGuiWindowFlags_HorizontalScrollbar);
+        ImGui::BeginChild("showFileContentChild", ImVec2(800, 400), true, ImGuiWindowFlags_HorizontalScrollbar);
 
         if (!contentBuf.empty()) {
             // InputTextMultiline accepts the mutable buffer and size.
             // We use ImGuiInputTextFlags_ReadOnly so the user can't edit it.
-            ImGui::InputTextMultiline("##logcontents",
+            ImGui::InputTextMultiline("##fileContents",
                                     contentBuf.data(),
                                     contentBuf.size(),
                                     ImVec2(-1, -1),
                                     ImGuiInputTextFlags_ReadOnly);
         } else {
-            ImGui::TextUnformatted("[Log is empty]");
+            ImGui::TextUnformatted("[file is empty]");
         }
 
         ImGui::EndChild();

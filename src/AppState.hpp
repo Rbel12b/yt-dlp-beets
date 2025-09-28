@@ -30,7 +30,6 @@ public:
     bool commandInProgress = false;
     std::string inProgressText = "";
 
-    bool errorShowLog = false;
     std::filesystem::path logFile;
 
     bool startCommand = false;
@@ -62,6 +61,15 @@ public:
         bool pickDir = false;
         std::filesystem::path dir;
     } beets;
+
+    struct
+    {
+        bool enabled = false;
+        std::filesystem::path filePath;
+        std::string msg;
+        bool errorLog = false;
+    } showFile;
+    
 };
 
 #endif // APP_STATE_H

@@ -17,6 +17,7 @@ cmake --build "$BUILD_DIR" --target generate_icons
 mkdir -p "$APPDIR/usr/bin"
 mkdir -p "$APPDIR/usr/share/applications"
 mkdir -p "$APPDIR/usr/share/icons/hicolor/256x256/apps"
+mkdir -p "$APPDIR/usr/share/licenses/${APP}/"
 
 # 4. Copy built binaries
 cp "$BUILD_DIR/$APP" "$APPDIR/usr/bin/"
@@ -25,6 +26,8 @@ chmod +x "$APPDIR/usr/bin/$APP"
 # 5. Copy third-party Linux executables
 cp "thirdparty/linux/"* "$APPDIR/usr/bin/"
 chmod +x "$APPDIR/usr/bin/"*
+
+cp "thirdparty/licenses/LICENSES_COMBINED.txt" "$APPDIR/usr/share/licenses/${APP}/"
 
 # 6. Copy generated 256x256 icon to AppDir
 ICON_SRC="$BUILD_DIR/icons/${APP}-256.png"
@@ -36,10 +39,8 @@ DESKTOP_SRC="$BUILD_DIR/${APP}.desktop"
 DESKTOP_DST="$APPDIR/usr/share/applications/${APP}.desktop"
 cp "$DESKTOP_SRC" "$DESKTOP_DST"
 
-export STRIP=/usr/bin/strip
-
 # 8. Run linuxdeploy + appimagetool
-STRIP=/usr/bin/strip linuxdeploy --appdir "$APPDIR" \
+linuxdeploy --appdir "$APPDIR" \
   -d "$DESKTOP_DST" \
   -i "$ICON_DST" \
   --output appimage

@@ -26,6 +26,7 @@ namespace Utils
     std::string getMusicDir();
     std::string getDownloadsDir();
     std::filesystem::path getBundledExePath(const std::string &name);
+    std::filesystem::path getLicensePath();
 
     // Returns the absolute path of the running executable
     std::filesystem::path getExecutableDir();

@@ -486,4 +486,23 @@ namespace Utils
 #endif
     }
 
+    std::filesystem::path getLicensePath()
+    {
+        std::filesystem::path licensePath;
+#ifdef _WIN32
+        licensePath = getExecutableDir() / "licenses" / "LICENSES_COMBINED.txt";
+#else
+        const char* appdir = std::getenv("APPDIR");
+        if (!appdir) {
+            std::cerr << "APPDIR not set!\n";
+            licensePath = getExecutableDir() / ".." / "thirdparty" / "licenses" / "LICENSES_COMBINED.txt";
+        }
+        else
+        {
+            licensePath = std::filesystem::path(appdir) / "usr/share/licenses/yt-dlp-beets/LICENSES_COMBINED.txt";
+        }
+#endif
+        return licensePath;
+    }
+
 } // namespace Utils

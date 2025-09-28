@@ -4,5 +4,5 @@ Exec=@APP_EXECUTABLE@ %U
 Icon=@APP_NAME@
 Type=Application
 Terminal=false
-Categories=Audio;Utility;
+Categories=AudioVideo;Audio;Utility;
 StartupWMClass=@APP_NAME@

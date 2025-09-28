@@ -110,14 +110,16 @@ int App::run(int argc, char **argv, std::filesystem::path logFile)
             state.commandInProgress = true;
             if (PythonSetup::SetupPythonEnv(pythonExe) != 0)
             {
-                state.errorShowLog = true;
+                state.showFile.errorLog = true;
+                state.showFile.enabled = true;
                 state.commandInProgress = false;
                 break; // Failed to setup python
             }
             pythonPath = PythonSetup::getPythonPath();
             if (beets::ensureConfig(state))
             {
-                state.errorShowLog = true;
+                state.showFile.errorLog = true;
+                state.showFile.enabled = true;
                 state.commandInProgress = false;
                 break; // Failed to setup beets
             }
@@ -140,7 +142,8 @@ int App::run(int argc, char **argv, std::filesystem::path logFile)
             }
             else
             {
-                state.errorShowLog = true;
+                state.showFile.errorLog = true;
+                state.showFile.enabled = true;
             }
             state.commandInProgress = false;
         }
