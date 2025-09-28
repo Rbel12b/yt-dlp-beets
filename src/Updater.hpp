@@ -83,7 +83,8 @@ class Updater
 {
 public:
     bool checkUpdate(AppState& state);
-    void update(AppState& state) __THROW __attribute__ ((__noreturn__));
+    bool donwloadUpdate(AppState state);
+    void update(AppState& state);
 
     bool updateAvailable = false;
 };

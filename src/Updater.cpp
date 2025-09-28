@@ -35,7 +35,35 @@ bool Updater::checkUpdate(AppState& state)
     return false;
 }
 
-void Updater::update(AppState& state) __THROW
+bool Updater::donwloadUpdate(AppState state)
 {
-    exit(0);
+#ifdef _WIN32
+#else
+    auto exPath = Utils::getExecutable();
+    auto AppImagePath = exPath.string() + ".new";
+    if (!Utils::downloadFile(state.repoUrl + "/releases/latest/download/yt-dlp-beets.AppImage", AppImagePath))
+    {
+        std::cout << "Failed to get latest appimage";
+        return true;
+    }
+#endif
+    return false;
+}
+
+void Updater::update(AppState& state)
+{
+#ifdef _WIN32
+#else
+    auto exPath = Utils::getExecutable();
+    auto AppImagePath = exPath.string() + ".new";
+    if (!std::filesystem::exists(AppImagePath))
+    {
+        std::cout << "latest appimage not found, maybe donwload it?";
+        return;
+    }
+    std::filesystem::remove(exPath);
+    std::filesystem::rename(AppImagePath, exPath);
+    Utils::runCommand("chmod +x \"" + AppImagePath + "\"");
+    Utils::runCommandDetached(AppImagePath);
+#endif
 }

@@ -40,6 +40,7 @@ void GUI::render(AppState &state)
     }
 
     renderPlayListOptions(state);
+    renderNewVersionPopup(state);
 }
 
 void GUI::renderMenuBar(AppState &state)
@@ -71,7 +72,7 @@ void GUI::renderErrorLogPopup(AppState &state)
         state.errorShowLog = false; // Only open once
     }
 
-    if (ImGui::BeginPopupModal("Error", nullptr, ImGuiWindowFlags_AlwaysAutoResize))
+    if (ImGui::BeginPopupModal("Error", nullptr, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse))
     {
         ImGui::Text("An error occurred. The application will now exit.");
 
@@ -166,7 +167,7 @@ void GUI::renderPlayListOptions(AppState &state)
         state.download.showplaylistOptions = false;
         yt_dlp_utils::parseDownloadState(state);
     }
-    if (!ImGui::BeginPopupModal("playlist", nullptr, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_AlwaysAutoResize))
+    if (!ImGui::BeginPopupModal("playlist", nullptr, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove))
     {
         return;
     }
@@ -182,6 +183,44 @@ void GUI::renderPlayListOptions(AppState &state)
         ImGui::CloseCurrentPopup();
         yt_dlp_utils::saveFlagsFromState(state);
     }
+
+    ImGui::SetItemDefaultFocus();
+    ImGui::EndPopup();
+}
+
+void GUI::renderNewVersionPopup(AppState &state)
+{
+    if (state.newVersionPopup)
+    {
+        ImGui::OpenPopup("newvesion");
+        state.newVersionPopup = false;
+    }
+    if (!ImGui::BeginPopupModal("newvesion", nullptr, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove))
+    {
+        return;
+    }
+
+    ImGui::Dummy(ImVec2(10, 10));
+    ImGui::Dummy(ImVec2(10, 10));
+    ImGui::SameLine();
+    ImGui::Text("A new version is available,\ndo you want to donwload it?\n(The program will restart)");
+    ImGui::SameLine();
+    ImGui::Dummy(ImVec2(10, 10));
+
+    ImGui::Dummy(ImVec2(10, 10));
+    ImGui::Dummy(ImVec2(50, 10));
+    ImGui::SameLine();
+    if (ImGui::Button("Yes"))
+    {
+        state.downloadUpdate = true;
+        ImGui::CloseCurrentPopup();
+    }
+    ImGui::SameLine();
+    if (ImGui::Button("No"))
+    {
+        ImGui::CloseCurrentPopup();
+    }
+    ImGui::Dummy(ImVec2(10, 10));
 
     ImGui::SetItemDefaultFocus();
     ImGui::EndPopup();

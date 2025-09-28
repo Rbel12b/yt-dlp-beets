@@ -19,13 +19,16 @@ public:
     bool readyForUpdate = false;
     std::string repoUrl = "https://github.com/Rbel12b/yt-dlp-beets";
     Updater* updater;
+    bool newVersionPopup = false;
+    bool downloadUpdate = false;
 
     bool progamShouldExit = false;
 
     ImVec2 mainWindowSize = ImVec2(0, 0);
 
     bool pythonSetupComplete = false;
-    bool pythonSetupInProgress = false;
+    bool commandInProgress = false;
+    std::string inProgressText = "";
 
     bool errorShowLog = false;
     std::filesystem::path logFile;

@@ -29,6 +29,7 @@ namespace Utils
 
     // Returns the absolute path of the running executable
     std::filesystem::path getExecutableDir();
+    std::filesystem::path getExecutable();
 
     // Returns a user-writable directory for app data
     // Windows -> %LOCALAPPDATA%\yt-dlp-beets
@@ -48,6 +49,8 @@ namespace Utils
     int runCommand(const std::string &cmd);
 
     bool runInteractiveTerminal(const std::string &command);
+
+    bool runCommandDetached(const std::string &cmd);
 
     /**
      * execute a command and return the output.

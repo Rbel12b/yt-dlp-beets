@@ -17,6 +17,7 @@ private:
     void renderErrorLogPopup(AppState& state);
     void renderMain(AppState& state);
     void renderPlayListOptions(AppState& state);
+    void renderNewVersionPopup(AppState& state);
 };
 
 #endif // GUI_H

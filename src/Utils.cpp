@@ -77,14 +77,18 @@ namespace Utils
 
     std::filesystem::path getExecutableDir()
     {
-        std::filesystem::path exeDir;
+        return getExecutable().parent_path();
+    }
 
+    std::filesystem::path getExecutable()
+    {
+        std::filesystem::path exeDir;
 #ifdef _WIN32
         char buffer[MAX_PATH];
         DWORD len = GetModuleFileNameA(nullptr, buffer, MAX_PATH);
         if (len != 0)
         {
-            exeDir = std::filesystem::path(buffer).parent_path();
+            exeDir = std::filesystem::path(buffer);
         }
 #else
         char buffer[PATH_MAX];
@@ -92,10 +96,9 @@ namespace Utils
         if (len != -1)
         {
             buffer[len] = '\0';
-            exeDir = std::filesystem::path(buffer).parent_path();
+            exeDir = std::filesystem::path(buffer);
         }
 #endif
-
         return exeDir;
     }
 
@@ -337,6 +340,56 @@ namespace Utils
         waitpid(pid, &status, 0);
 #endif
         return output;
+    }
+
+    bool runCommandDetached(const std::string &cmd)
+    {
+#if defined(_WIN32)
+        STARTUPINFOA si{};
+        PROCESS_INFORMATION pi{};
+        si.cb = sizeof(si);
+
+        std::string mutableCmd = cmd; // Windows API wants mutable buffer
+        char *cmdline = mutableCmd.data();
+
+        BOOL ok = CreateProcessA(
+            nullptr,          // application name
+            cmdline,          // command line
+            nullptr,          // process security
+            nullptr,          // thread security
+            FALSE,            // handle inheritance
+            DETACHED_PROCESS, // don't attach to parent's console, no forced hiding
+            nullptr,          // environment
+            nullptr,          // working directory
+            &si,              // startup info
+            &pi               // process info
+        );
+
+        if (!ok)
+        {
+            return false;
+        }
+
+        // Clean up handles, we don't care about them
+        CloseHandle(pi.hProcess);
+        CloseHandle(pi.hThread);
+        return true;
+#else
+        pid_t pid = fork();
+        if (pid < 0)
+        {
+            return false; // fork failed
+        }
+        if (pid == 0)
+        {
+            // child process
+            setsid(); // new session, no controlling terminal
+            execl("/bin/sh", "sh", "-c", cmd.c_str(), (char *)nullptr);
+            _exit(127); // exec failed
+        }
+        // parent just returns
+        return true;
+#endif
     }
 
     std::filesystem::path getBundledExePath(const std::string &name)

@@ -47,16 +47,16 @@ void App::render()
 {
     state.mainWindowSize = renderer.getWindowSize();
 
-    if (state.pythonSetupInProgress)
+    if (state.commandInProgress)
     {
         ImVec2 windowSize = ImVec2(300, 100);
         ImGui::SetNextWindowPos(ImVec2((state.mainWindowSize.x - windowSize.x) * 0.5f, (state.mainWindowSize.y - windowSize.y) * 0.5f), ImGuiCond_Always);
         ImGui::SetNextWindowSize(windowSize, ImGuiCond_Always);
         ImGui::Begin("Setup", nullptr, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoTitleBar);
-        const char *text = "Setting up Python environment...";
+        const char *text = state.inProgressText.c_str();
         auto textSize = ImGui::CalcTextSize(text);
         ImGui::SetCursorPos(ImVec2((windowSize.x - textSize.x) * 0.5f, (windowSize.y - textSize.y) * 0.5f - 10));
-        ImGui::Text("Setting up Python environment...");
+        ImGui::Text(text);
         ImGui::SetCursorPos(ImVec2((windowSize.x - 30) * 0.5f, (windowSize.y - 30) * 0.5f + 10));
         ImGui::Spinner("##spinner", 15.0f, 4, ImGui::GetColorU32(ImGuiCol_ButtonHovered));
         ImGui::End();
@@ -106,25 +106,42 @@ int App::run(int argc, char **argv, std::filesystem::path logFile)
     {
         if (!state.pythonSetupComplete)
         {
-            state.pythonSetupInProgress = true;
+            state.inProgressText = "Setting up Python environment...";
+            state.commandInProgress = true;
             if (PythonSetup::SetupPythonEnv(pythonExe) != 0)
             {
                 state.errorShowLog = true;
-                state.pythonSetupInProgress = false;
+                state.commandInProgress = false;
                 break; // Failed to setup python
             }
             pythonPath = PythonSetup::getPythonPath();
             if (beets::ensureConfig(state))
             {
                 state.errorShowLog = true;
-                state.pythonSetupInProgress = false;
+                state.commandInProgress = false;
                 break; // Failed to setup beets
             }
-            state.pythonSetupInProgress = false;
+            state.commandInProgress = false;
             state.pythonSetupComplete = true;
             if (state.updater && state.updater->checkUpdate(state))
             {
+                state.newVersionPopup = true;
             }
+        }
+        if (state.downloadUpdate)
+        {
+            state.downloadUpdate = false;
+            state.inProgressText = "Donwloading update...";
+            state.commandInProgress = true;
+            if (state.updater && state.updater->donwloadUpdate(state))
+            {
+                state.progamShouldExit = true;
+            }
+            else
+            {
+                state.errorShowLog = true;
+            }
+            state.commandInProgress = false;
         }
         if (state.startCommand)
         {
@@ -160,6 +177,24 @@ int App::run(int argc, char **argv, std::filesystem::path logFile)
     }
 
     renderer.join();
+
+    if (state.readyForUpdate)
+    {
+        std::cout << "updating.\n";
+        state.updater->update(state);
+    }
+
+    if (state.version)
+    {
+        delete state.version;
+        state.version = nullptr;
+    }
+
+    if (state.updater)
+    {
+        delete state.updater;
+        state.updater = nullptr;
+    }
 
     return 0;
 }
