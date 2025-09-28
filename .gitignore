@@ -1,6 +1,5 @@
 thirdparty/windows
 thirdparty/linux
-thirdparty/licenses/LICENSE.*.txt
 build
 build-win
 _CPack_Packages

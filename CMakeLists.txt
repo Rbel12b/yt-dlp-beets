@@ -33,6 +33,8 @@ set(WINDOWS_ICON_RESOURCE_OUT "${CMAKE_BINARY_DIR}/${APP_NAME}.rc")
 set(BEETS_CONFIG_IN "../resources/beets.config.yaml")
 set(BEETS_CONFIG_OUT "${CMAKE_BINARY_DIR}/beets.config.yaml.str")
 
+set(PROJECT_LICENSES_COMBINED "${CMAKE_SOURCE_DIR}/thirdparty/licenses/LICENSES_COMBINED.txt")
+
 # --- Find dependencies ---
 file(GLOB_RECURSE SOURCES CONFIGURE_DEPENDS src/*.cpp)
 
@@ -131,6 +133,47 @@ add_custom_target(generate_icons ALL
 
 add_dependencies(${APP_EXECUTABLE} generate_icons)
 
+add_custom_command(
+  OUTPUT ${PROJECT_LICENSES_COMBINED}
+  COMMAND echo "yt-dlp-beets License" > ${PROJECT_LICENSES_COMBINED}
+  COMMAND echo "===================" >> ${PROJECT_LICENSES_COMBINED}
+  COMMAND echo "" >> ${PROJECT_LICENSES_COMBINED}
+  COMMAND cat ${CMAKE_SOURCE_DIR}/LICENSE >> ${PROJECT_LICENSES_COMBINED}
+  COMMAND echo "" >> ${PROJECT_LICENSES_COMBINED}
+  COMMAND echo "" >> ${PROJECT_LICENSES_COMBINED}
+  COMMAND echo "Third-party licenses" >> ${PROJECT_LICENSES_COMBINED}
+  COMMAND echo "====================" >> ${PROJECT_LICENSES_COMBINED}
+  COMMAND echo "" >> ${PROJECT_LICENSES_COMBINED}
+  COMMAND echo "ffmpeg License:" >> ${PROJECT_LICENSES_COMBINED}
+  COMMAND echo "-------------" >> ${PROJECT_LICENSES_COMBINED}
+  COMMAND echo "" >> ${PROJECT_LICENSES_COMBINED}
+  COMMAND cat ${CMAKE_SOURCE_DIR}/thirdparty/licenses/LICENSE.ffmpeg.txt >> ${PROJECT_LICENSES_COMBINED}
+  COMMAND echo "" >> ${PROJECT_LICENSES_COMBINED}
+  COMMAND echo "" >> ${PROJECT_LICENSES_COMBINED}
+  COMMAND echo "yt-dlp License:" >> ${PROJECT_LICENSES_COMBINED}
+  COMMAND echo "------------" >> ${PROJECT_LICENSES_COMBINED}
+  COMMAND echo "" >> ${PROJECT_LICENSES_COMBINED}
+  COMMAND cat ${CMAKE_SOURCE_DIR}/thirdparty/licenses/LICENSE.yt-dlp.txt >> ${PROJECT_LICENSES_COMBINED}
+  COMMAND echo "" >> ${PROJECT_LICENSES_COMBINED}
+  COMMAND echo "" >> ${PROJECT_LICENSES_COMBINED}
+  COMMAND echo "python License:" >> ${PROJECT_LICENSES_COMBINED}
+  COMMAND echo "-------------" >> ${PROJECT_LICENSES_COMBINED}
+  COMMAND echo "" >> ${PROJECT_LICENSES_COMBINED}
+  COMMAND cat ${CMAKE_SOURCE_DIR}/thirdparty/licenses/LICENSE.python.txt >> ${PROJECT_LICENSES_COMBINED}
+  DEPENDS
+    ${CMAKE_SOURCE_DIR}/LICENSE
+    ${CMAKE_SOURCE_DIR}/thirdparty/licenses/LICENSE.ffmpeg.txt
+    ${CMAKE_SOURCE_DIR}/thirdparty/licenses/LICENSE.yt-dlp.txt
+    ${CMAKE_SOURCE_DIR}/thirdparty/licenses/LICENSE.python.txt
+  COMMENT "Combining license files"
+)
+
+add_custom_target(generate_licenses ALL
+  DEPENDS ${PROJECT_LICENSES_COMBINED}
+)
+
+add_dependencies(${APP_EXECUTABLE} generate_licenses)
+
 # ---- Platform-specific linker flags ----
 if(MINGW)
     if(CMAKE_BUILD_TYPE STREQUAL "Release")
@@ -177,7 +220,7 @@ set(CPACK_PACKAGE_VENDOR "Rbel12b")
 set(CPACK_PACKAGE_VERSION "${PROJECT_VERSION}")
 set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "GUI wrapper for yt-dlp integrated with beets")
 set(CPACK_PACKAGE_CONTACT "")
-set(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_SOURCE_DIR}/LICENSE")
+set(CPACK_RESOURCE_FILE_LICENSE "${PROJECT_LICENSES_COMBINED}")
 set(CPACK_THREADS 0)
 
 # Install all license files to a "licenses" folder inside installation dir
