@@ -18,6 +18,15 @@ int main(int argc, char **argv)
 {
 #endif
     std::filesystem::path logFilePath = Utils::getUserDataDir() / "log.txt";
+    if (std::filesystem::exists(logFilePath))
+    {
+        std::filesystem::path oldLogFilePath = logFilePath.string() + ".old";
+        if (std::filesystem::exists(oldLogFilePath))
+        {
+            std::filesystem::remove(oldLogFilePath);
+        }
+        std::filesystem::rename(logFilePath, oldLogFilePath);
+    }
     std::string logFile = logFilePath.string();
     // Redirect C I/O
     FILE* f1 = freopen(logFile.c_str(), "w", stdout);

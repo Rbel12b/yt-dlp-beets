@@ -1,10 +1,10 @@
-// Utils.hpp
 #pragma once
 #ifndef UTILS_HPP
 #define UTILS_HPP
 
 #include <string>
 #include <filesystem>
+#include "AppState.hpp"
 
 #ifdef _WIN32
 #include <windows.h>
@@ -40,7 +40,7 @@ namespace Utils
     // Cross-platform file download using curl
     // url: remote file URL
     // dest: local path to save the file
-    bool downloadFile(const std::string &url, const std::filesystem::path &dest);
+    bool downloadFile(const std::string &url, const std::filesystem::path &dest, AppState& state);
 
     bool loadFileToString(const std::string &path, std::string &out);
 

@@ -78,8 +78,9 @@ set(DearImGui_Backend_SDL2 ON)
 add_subdirectory(${CMAKE_SOURCE_DIR}/thirdparty/lib/CMakeForImGui EXCLUDE_FROM_ALL)
 
 find_package(SDL2 CONFIG REQUIRED)
+find_package(CURL REQUIRED)
 
-target_link_libraries(${APP_EXECUTABLE} PRIVATE imgui_core imgui_impl_sdl2 imgui_impl_sdlrenderer2 SDL2::SDL2)
+target_link_libraries(${APP_EXECUTABLE} PRIVATE imgui_core imgui_impl_sdl2 imgui_impl_sdlrenderer2 SDL2::SDL2 CURL::libcurl)
 
 # --- Custom commands: generate icons ---
 
@@ -213,6 +214,8 @@ if(WIN32)
         DESTINATION bin
     )
     install(DIRECTORY ${CMAKE_SOURCE_DIR}/thirdparty/windows/python/ DESTINATION python)
+
+    install(FILES "$<TARGET_FILE:CURL::libcurl>" DESTINATION .)
 
     # Path to the SDL2 runtime DLL
     find_file(SDL2_DLL NAMES SDL2.dll PATHS ${SDL2_DIR} PATH_SUFFIXES bin)

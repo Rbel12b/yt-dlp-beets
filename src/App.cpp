@@ -37,6 +37,8 @@ App::App()
     state.version = new Version("");
     (*state.version) = versionStr;
     state.updater = new Updater();
+
+    strncpy(state.download.flagsBuffer, "--no-playlist", sizeof(state.download.flagsBuffer) - 1);
 }
 
 App::~App()
@@ -57,8 +59,15 @@ void App::render()
         auto textSize = ImGui::CalcTextSize(text);
         ImGui::SetCursorPos(ImVec2((windowSize.x - textSize.x) * 0.5f, (windowSize.y - textSize.y) * 0.5f - 10));
         ImGui::Text(text);
-        ImGui::SetCursorPos(ImVec2((windowSize.x - 30) * 0.5f, (windowSize.y - 30) * 0.5f + 10));
-        ImGui::Spinner("##spinner", 15.0f, 4, ImGui::GetColorU32(ImGuiCol_ButtonHovered));
+        if (state.commandProgress < 0)
+        {
+            ImGui::SetCursorPos(ImVec2((windowSize.x - 30) * 0.5f, (windowSize.y - 30) * 0.5f + 10));
+            ImGui::Spinner("##spinner", 15.0f, 4, ImGui::GetColorU32(ImGuiCol_ButtonHovered));
+        }
+        else
+        {
+            ImGui::ProgressBar((float)state.commandProgress / 100);
+        }
         ImGui::End();
         return;
     }
@@ -107,6 +116,7 @@ int App::run(int argc, char **argv, std::filesystem::path logFile)
         if (!state.pythonSetupComplete)
         {
             state.inProgressText = "Setting up Python environment...";
+            state.commandProgress = -1;
             state.commandInProgress = true;
             if (PythonSetup::SetupPythonEnv(pythonExe) != 0)
             {
@@ -133,6 +143,7 @@ int App::run(int argc, char **argv, std::filesystem::path logFile)
         if (state.downloadUpdate)
         {
             state.downloadUpdate = false;
+            state.commandProgress = 0;
             state.inProgressText = "Donwloading update...";
             state.commandInProgress = true;
             if (state.updater && !state.updater->donwloadUpdate(state))
@@ -146,6 +157,7 @@ int App::run(int argc, char **argv, std::filesystem::path logFile)
                 state.showFile.enabled = true;
             }
             state.commandInProgress = false;
+            state.commandProgress = -1;
         }
         if (state.startCommand)
         {
