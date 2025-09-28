@@ -1,5 +1,11 @@
 # yt-dlp-beets
 
+<div align="center">
+
+[![YT-DLP-BEETS](https://raw.githubusercontent.com/Rbel12b/yt-dlp-beets/main/resources/yt-dlp-beets.png)](#readme)
+
+</div>
+
 A desktop application for managing and downloading audio files using yt-dlp and beets.
 
 ## CREDITS
