@@ -1,0 +1,28 @@
+import:
+  move: yes
+  write: yes
+  copy: no
+  autotag: yes
+  quiet_fallback: asis
+
+plugins: fetchart lyrics mbsync embedart chroma
+
+fetchart:
+  auto: yes
+  maxwidth: 1200
+  quality: 90
+  sources: spotify itunes coverart albumart
+
+embedart:
+  auto: yes
+  remove_art_file: yes
+  ifempty: no
+  compare_threshold: 0
+  maxwidth: 1200
+  quality: 80
+
+lyrics:
+  auto: yes
+  sources: [lrclib, genius, tekstowo]
+  synced: yes
+  force: yes

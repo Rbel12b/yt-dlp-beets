@@ -43,6 +43,13 @@ struct AppState
     std::filesystem::path audioDir;
     std::filesystem::path tempAudioDir;
     std::filesystem::path videoDir;
+
+    struct
+    {
+        bool import = false;
+        bool pickDir = false;
+        std::filesystem::path dir;
+    } beets;
 };
 
 #endif // APP_STATE_H

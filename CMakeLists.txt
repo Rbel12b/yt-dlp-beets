@@ -29,6 +29,10 @@ set(DESKTOP_TEMPLATE_OUT "${CMAKE_BINARY_DIR}/${APP_NAME}.desktop")
 set(WINDOWS_ICON_RESOURCE_IN "${CMAKE_SOURCE_DIR}/resources/${APP_NAME}.rc.in")
 set(WINDOWS_ICON_RESOURCE_OUT "${CMAKE_BINARY_DIR}/${APP_NAME}.rc")
 
+
+set(BEETS_CONFIG_IN "../resources/beets.config.yaml")
+set(BEETS_CONFIG_OUT "${CMAKE_BINARY_DIR}/beets.config.yaml.str")
+
 # --- Find dependencies ---
 file(GLOB_RECURSE SOURCES CONFIGURE_DEPENDS src/*.cpp)
 
@@ -38,6 +42,20 @@ if(WIN32)
 else()
   add_executable(${APP_EXECUTABLE} ${SOURCES})
 endif()
+
+target_include_directories(${APP_EXECUTABLE} PRIVATE src ${CMAKE_SOURCE_DIR}/thirdparty/lib/include ${CMAKE_BINARY_DIR})
+
+add_custom_command(
+  OUTPUT ${BEETS_CONFIG_OUT}
+  COMMAND xxd -i "${BEETS_CONFIG_IN}" > ${BEETS_CONFIG_OUT}
+  COMMENT "Generating beets default config"
+)
+
+add_custom_target(generate_beets_config ALL
+  DEPENDS ${BEETS_CONFIG_OUT}
+)
+
+add_dependencies(${APP_EXECUTABLE} generate_beets_config)
 
 # --- Libraries ---
 

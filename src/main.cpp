@@ -17,7 +17,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 int main(int argc, char **argv)
 {
 #endif
-    std::filesystem::path logFilePath = Utils::GetUserDataDir() / "log.txt";
+    std::filesystem::path logFilePath = Utils::getUserDataDir() / "log.txt";
     std::string logFile = logFilePath.string();
     // Redirect C I/O
     FILE* f1 = freopen(logFile.c_str(), "w", stdout);

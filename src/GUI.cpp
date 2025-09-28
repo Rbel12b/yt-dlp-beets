@@ -62,7 +62,7 @@ void GUI::renderErrorLogPopup(AppState &state)
    
     if (state.errorShowLog)
     {
-        if (!Utils::LoadFileToString(state.logFile.string(), content))
+        if (!Utils::loadFileToString(state.logFile.string(), content))
             content = std::string("[Failed to open log file: ") + state.logFile.string() + "]";
 
         contentBuf.assign(content.begin(), content.end());
@@ -142,6 +142,19 @@ void GUI::renderMain(AppState &state)
     if (ImGui::Button("Download"))
     {
         state.download.start = true;
+    }
+
+    if (ImGui::Button("Import donwloaded files to beets library"))
+    {
+        state.beets.dir = state.tempAudioDir;
+        state.beets.pickDir = false;
+        state.beets.import = true;
+    }
+
+    if (ImGui::Button("Import directory to beets library"))
+    {
+        state.beets.pickDir = true;
+        state.beets.import = true;
     }
 }
 

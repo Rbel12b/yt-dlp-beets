@@ -4,6 +4,9 @@
 #include <cstdlib>
 #include <fstream>
 #include <iostream>
+#include <stdexcept>
+#include <array>
+#include <memory>
 
 #ifdef _WIN32
 #include <windows.h>
@@ -12,6 +15,7 @@
 #else
 #include <unistd.h>
 #include <sys/types.h>
+#include <sys/wait.h>
 #include <pwd.h>
 #include <limits.h>
 #endif
@@ -71,7 +75,7 @@ namespace Utils
 #endif
     }
 
-    std::filesystem::path GetExecutableDir()
+    std::filesystem::path getExecutableDir()
     {
         std::filesystem::path exeDir;
 
@@ -95,7 +99,7 @@ namespace Utils
         return exeDir;
     }
 
-    std::filesystem::path GetUserDataDir()
+    std::filesystem::path getUserDataDir()
     {
         static const std::string appName = "yt-dlp-beets";
         std::filesystem::path dataDir;
@@ -131,14 +135,14 @@ namespace Utils
         return dataDir;
     }
 
-    bool DownloadFile(const std::string &url, const std::filesystem::path &dest)
+    bool downloadFile(const std::string &url, const std::filesystem::path &dest)
     {
         std::string cmd = "curl -L -o \"" + dest.string() + "\" \"" + url + "\"";
-        int ret = RunCommand(cmd);
+        int ret = runCommand(cmd);
         return ret == 0;
     }
 
-    int RunCommand(const std::string &cmd)
+    int runCommand(const std::string &cmd)
     {
 #ifdef _WIN32
         STARTUPINFOA si;
@@ -211,7 +215,7 @@ namespace Utils
 #endif
     }
 
-    bool LoadFileToString(const std::string &path, std::string &out)
+    bool loadFileToString(const std::string &path, std::string &out)
     {
         std::ifstream ifs(path, std::ios::in | std::ios::binary);
         if (!ifs)
@@ -244,10 +248,101 @@ namespace Utils
 #endif
     }
 
-    std::filesystem::path GetBundledExePath(const std::string &name)
+    std::string runCommandOutput(const std::string &cmd)
+    {
+        std::cout << "executing: " << cmd << "\n";
+        std::string output;
+#if defined(_WIN32)
+        SECURITY_ATTRIBUTES sa{};
+        sa.nLength = sizeof(sa);
+        sa.bInheritHandle = TRUE;
+
+        HANDLE hRead = NULL, hWrite = NULL;
+        if (!CreatePipe(&hRead, &hWrite, &sa, 0))
+        {
+            throw std::runtime_error("Failed to create pipe");
+        }
+        SetHandleInformation(hRead, HANDLE_FLAG_INHERIT, 0);
+
+        STARTUPINFOA si{};
+        PROCESS_INFORMATION pi{};
+        si.cb = sizeof(si);
+        si.dwFlags = STARTF_USESTDHANDLES | STARTF_USESHOWWINDOW;
+        si.wShowWindow = SW_HIDE;
+        si.hStdOutput = hWrite;
+        si.hStdError = hWrite;
+        si.hStdInput = GetStdHandle(STD_INPUT_HANDLE);
+
+        std::string fullCmd = "cmd /C " + cmd;
+        char *mutableCmd = fullCmd.data();
+
+        if (!CreateProcessA(
+                nullptr, mutableCmd, nullptr, nullptr,
+                TRUE, CREATE_NO_WINDOW, nullptr, nullptr,
+                &si, &pi))
+        {
+            CloseHandle(hRead);
+            CloseHandle(hWrite);
+            throw std::runtime_error("CreateProcess failed");
+        }
+
+        CloseHandle(hWrite); // parent only reads
+
+        std::array<char, 4096> buffer;
+        DWORD bytesRead;
+        while (ReadFile(hRead, buffer.data(), (DWORD)buffer.size() - 1, &bytesRead, NULL) && bytesRead > 0)
+        {
+            buffer[bytesRead] = '\0';
+            output += buffer.data();
+            std::cout << buffer.data(); // forward live to parent's stdout
+        }
+
+        WaitForSingleObject(pi.hProcess, INFINITE);
+        CloseHandle(pi.hProcess);
+        CloseHandle(pi.hThread);
+        CloseHandle(hRead);
+
+#else
+        int pipefd[2];
+        if (pipe(pipefd) == -1)
+        {
+            throw std::runtime_error("pipe() failed");
+        }
+
+        pid_t pid = fork();
+        if (pid == 0)
+        {
+            // child
+            dup2(pipefd[1], STDOUT_FILENO);
+            dup2(pipefd[1], STDERR_FILENO);
+            close(pipefd[0]);
+            close(pipefd[1]);
+            execl("/bin/sh", "sh", "-c", cmd.c_str(), (char *)NULL);
+            _exit(127); // exec failed
+        }
+
+        // parent
+        close(pipefd[1]);
+        std::array<char, 4096> buffer;
+        ssize_t n;
+        while ((n = read(pipefd[0], buffer.data(), buffer.size() - 1)) > 0)
+        {
+            buffer[n] = '\0';
+            output += buffer.data();
+            std::cout << buffer.data();
+        }
+        close(pipefd[0]);
+
+        int status = 0;
+        waitpid(pid, &status, 0);
+#endif
+        return output;
+    }
+
+    std::filesystem::path getBundledExePath(const std::string &name)
     {
 #ifdef _WIN32
-        return GetExecutableDir() / "bin" / (name + ".exe");
+        return getExecutableDir() / "bin" / (name + ".exe");
 #else
         return name;
 #endif

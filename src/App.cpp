@@ -9,6 +9,8 @@
 #include <atomic>
 #include "imgui_additions.hpp"
 #include "yt-dlp.hpp"
+#include "portable-file-dialogs.h"
+#include "Beets.hpp"
 
 App::App()
 {
@@ -70,7 +72,7 @@ void App::keyCallback(const SDL_KeyboardEvent &keyEvent)
 int App::run(int argc, char **argv, std::filesystem::path logFile)
 {
     state.logFile = logFile;
-    std::filesystem::path exeDir = Utils::GetExecutableDir();
+    std::filesystem::path exeDir = Utils::getExecutableDir();
     try
     {
         std::filesystem::current_path(exeDir);
@@ -105,6 +107,12 @@ int App::run(int argc, char **argv, std::filesystem::path logFile)
                 break; // Failed to setup python
             }
             pythonPath = PythonSetup::getPythonPath();
+            if (beets::ensureConfig(state))
+            {
+                state.errorShowLog = true;
+                state.pythonSetupInProgress = false;
+                break; // Failed to setup beets
+            }
             state.pythonSetupInProgress = false;
             state.pythonSetupComplete = true;
         }
@@ -117,6 +125,26 @@ int App::run(int argc, char **argv, std::filesystem::path logFile)
         {
             yt_dlp_utils::donwload(state);
             state.download.start = false;
+        }
+        if (state.beets.import)
+        {
+            if (state.beets.pickDir)
+            {
+                auto file_select = pfd::select_folder("Select a directory to import", pfd::path::home());
+                state.beets.dir = file_select.result();
+                std::cout << "Selected dir: " << state.beets.dir << "\n";
+            }
+            if (state.beets.dir.empty())
+            {
+                std::cout << "No dir selected.\n";
+            }
+            else
+            {
+                std::cout << "Importing to beets library.\n";
+                Utils::runInteractiveTerminal(pythonPath.string() + 
+                    " -m beets import \"" + state.beets.dir.string() + "\"");
+            }
+            state.beets.import = false;
         }
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }

@@ -18,7 +18,7 @@ namespace PythonSetup
 
     int SetupPythonEnv(const fs::path &pythonExe)
     {
-        fs::path dataDir = Utils::GetUserDataDir();
+        fs::path dataDir = Utils::getUserDataDir();
         fs::path venvDir = dataDir / "venv";
         fs::path pipMarker = dataDir / ".pip_installed";
 
@@ -31,7 +31,7 @@ namespace PythonSetup
             if (!fs::exists(getPip))
             {
                 std::string url = "https://bootstrap.pypa.io/get-pip.py";
-                if (!Utils::DownloadFile(url, getPip.string()))
+                if (!Utils::downloadFile(url, getPip.string()))
                 {
                     std::cerr << "Failed to download get-pip.py\n";
                     return 1;
@@ -40,7 +40,7 @@ namespace PythonSetup
 
             cmd = "\"" + pythonExe.string() + "\" \"" + getPip.string() + "\" --user";
             std::cout << "Installing pip: " << cmd << std::endl;
-            if (Utils::RunCommand(cmd) != 0)
+            if (Utils::runCommand(cmd) != 0)
             {
                 std::cerr << "Failed to install pip\n";
                 return 1;
@@ -52,7 +52,7 @@ namespace PythonSetup
 
             cmd = "\"" + pythonExe.string() + "\" -m pip install --user virtualenv";
             std::cout << "Installing virtualenv: " << cmd << std::endl;
-            if (Utils::RunCommand(cmd) != 0)
+            if (Utils::runCommand(cmd) != 0)
             {
                 std::cerr << "Failed to install virtualenv\n";
                 return 1;
@@ -66,7 +66,7 @@ namespace PythonSetup
 #endif
 
             std::cout << "Creating virtualenv: " << cmd << std::endl;
-            if (Utils::RunCommand(cmd) != 0)
+            if (Utils::runCommand(cmd) != 0)
             {
                 std::cerr << "Failed to create virtual environment\n";
                 return 1;
@@ -88,7 +88,7 @@ namespace PythonSetup
             if (!fs::exists(getPip))
             {
                 std::string url = "https://bootstrap.pypa.io/get-pip.py";
-                if (!Utils::DownloadFile(url, getPip.string()))
+                if (!Utils::downloadFile(url, getPip.string()))
                 {
                     std::cerr << "Failed to download get-pip.py\n";
                     return 1;
@@ -100,7 +100,7 @@ namespace PythonSetup
             std::string cmd = "\"" + venvPython.string() + "\" -m ensurepip";
 #endif
             std::cout << "Installing pip: " << cmd << std::endl;
-            if (Utils::RunCommand(cmd) != 0)
+            if (Utils::runCommand(cmd) != 0)
             {
                 std::cerr << "Failed to install pip\n";
                 return 1;
@@ -114,7 +114,7 @@ namespace PythonSetup
         std::string beetsCmd = "\"" + venvPython.string() + "\" -m pip install --upgrade pip "
                                                             "beets[fetchart,lyrics,embedart,chroma]";
         std::cout << "Installing beets: " << beetsCmd << std::endl;
-        if (Utils::RunCommand(beetsCmd) != 0)
+        if (Utils::runCommand(beetsCmd) != 0)
         {
             std::cerr << "Failed to install beets\n";
             return 1;
@@ -126,7 +126,7 @@ namespace PythonSetup
 
     fs::path getPythonPath()
     {
-        fs::path dataDir = Utils::GetUserDataDir();
+        fs::path dataDir = Utils::getUserDataDir();
         fs::path venvDir = dataDir / "venv";
 #ifdef _WIN32
         fs::path venvPython = venvDir / "Scripts" / "python.exe";

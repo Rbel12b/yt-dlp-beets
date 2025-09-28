@@ -25,30 +25,39 @@ namespace Utils
     std::string getVideosDir();
     std::string getMusicDir();
     std::string getDownloadsDir();
+    std::filesystem::path getBundledExePath(const std::string &name);
 
     // Returns the absolute path of the running executable
-    std::filesystem::path GetExecutableDir();
+    std::filesystem::path getExecutableDir();
 
     // Returns a user-writable directory for app data
     // Windows -> %LOCALAPPDATA%\yt-dlp-beets
     // Linux   -> $HOME/.config/yt-dlp-beets
-    std::filesystem::path GetUserDataDir();
+    std::filesystem::path getUserDataDir();
 
     // Cross-platform file download using curl
     // url: remote file URL
     // dest: local path to save the file
-    bool DownloadFile(const std::string &url, const std::filesystem::path &dest);
+    bool downloadFile(const std::string &url, const std::filesystem::path &dest);
+
+    bool loadFileToString(const std::string &path, std::string &out);
 
     // Cross-platform command execution
     // Windows: hides console windows
     // Linux/macOS: runs via system()
-    int RunCommand(const std::string &cmd);
-
-    bool LoadFileToString(const std::string &path, std::string &out);
+    int runCommand(const std::string &cmd);
 
     bool runInteractiveTerminal(const std::string &command);
 
-    std::filesystem::path GetBundledExePath(const std::string &name);
+    /**
+     * execute a command and return the output.
+     * @param cmd the command to execute
+     * @returns the output (stdout)
+     * @exception throws std::runtime_error if failed
+     */
+    std::string runCommandOutput(const std::string& cmd);
+    
+
 }
 
 #endif // UTILS_HPP
