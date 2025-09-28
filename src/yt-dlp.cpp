@@ -137,18 +137,20 @@ void yt_dlp_utils::donwload(AppState &state)
         return;
     }
 
-    std::string yt_dlp_cmd = "\"" + Utils::getBundledExePath("yt-dlp").string() + "\" -N 10";
+    std::string yt_dlp_cmd = "\"" + Utils::getBundledExePath("yt-dlp").string() + "\""
 
     if (_download.audioOnly)
     {
-        yt_dlp_cmd += " --extract-audio --audio-format mp3 --embed-thumbnail --add-metadata \
---metadata-from-title \"%(artist)s - %(title)s\" -o \""
+        yt_dlp_cmd += " --extract-audio --audio-format mp3 --embed-thumbnail --add-metadata"
+            " --metadata-from-title \"%(artist)s - %(title)s\" -o \""
             + (state.tempAudioDir / "%(title)s [%(id)s].%(ext)s").string() + "\"";
     }
     else
     {
         yt_dlp_cmd += " \"" + (state.videoDir / "%(title)s [%(id)s].%(ext)s").string() + "\"";
     }
+
+    yt_dlp_cmd += " " + std::string(state.download.flagsBuffer);
 
     yt_dlp_cmd += " \"" + std::string(_download.urlBuffer) + "\"";
 
