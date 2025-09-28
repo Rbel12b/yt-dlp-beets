@@ -14,8 +14,8 @@ int beets::ensureConfig(AppState& state)
         static_cast<size_t>(___resources_beets_config_yaml_len));
 
 #ifdef _WIN32
-    std::string configBegin = "directory: \"" + state.audioDir.string() + "\"\nlibrary: \"" +
-        (Utils::getUserDataDir() / ".." / ".." / "Roaming" / "beets" / "library.db").string() + "\"\n";
+    std::string configBegin = "directory: " + state.audioDir.string() + "\nlibrary: " +
+        (Utils::getUserDataDir() / ".." / ".." / "Roaming" / "beets" / "library.db").string() + "\n";
 #else
     std::string configBegin = "directory: \"" + state.audioDir.string() + "\"\nlibrary: \"" +
         (Utils::getUserDataDir() / ".." / ".." / ".local" / "share" / "beets" / "library.db").string() + "\"\n";
@@ -42,6 +42,11 @@ int beets::ensureConfig(AppState& state)
     {
         std::cout << e.what() << "\n";
         return 1;
+    }
+
+    if (std::filesystem::exists(configFilePath))
+    {
+        return 0;
     }
 
     std::ofstream configFile(configFilePath, std::ios_base::out);
