@@ -7,6 +7,7 @@
 #include <stdexcept>
 #include <array>
 #include <memory>
+#include <vector>
 
 #ifdef _WIN32
 #include <windows.h>
@@ -18,10 +19,66 @@
 #include <sys/wait.h>
 #include <pwd.h>
 #include <limits.h>
+#include <fcntl.h>
 #endif
 
 namespace Utils
 {
+
+    // Simple splitter: supports double quotes and backslash escaping.
+    // Not a full shell parser, but handles common cases like:
+    //   --opt "some value" arg\ with\ spaces
+    static std::vector<std::string> splitArgString(const std::string &s)
+    {
+        std::vector<std::string> out;
+        std::string cur;
+        bool inQuotes = false;
+        for (size_t i = 0; i < s.size(); ++i)
+        {
+            char c = s[i];
+            if (c == '"')
+            {
+                inQuotes = !inQuotes;
+                continue;
+            }
+            if (c == '\\' && i + 1 < s.size())
+            {
+                // simple escape
+                ++i;
+                cur.push_back(s[i]);
+                continue;
+            }
+            if (!inQuotes && isspace(static_cast<unsigned char>(c)))
+            {
+                if (!cur.empty())
+                {
+                    out.push_back(cur);
+                    cur.clear();
+                }
+                continue;
+            }
+            cur.push_back(c);
+        }
+        if (!cur.empty())
+            out.push_back(cur);
+        return out;
+    }
+
+#if defined(_WIN32)
+    // UTF-8 -> wide
+    static std::wstring utf8_to_wstring(const std::string &s)
+    {
+        if (s.empty())
+            return {};
+        int wlen = MultiByteToWideChar(CP_UTF8, 0, s.c_str(), (int)s.size(), nullptr, 0);
+        if (wlen == 0)
+            return {};
+        std::wstring w;
+        w.resize(wlen);
+        MultiByteToWideChar(CP_UTF8, 0, s.c_str(), (int)s.size(), &w[0], wlen);
+        return w;
+    }
+#endif
 
 // Windows helper
 #ifdef _WIN32
@@ -342,53 +399,81 @@ namespace Utils
         return output;
     }
 
-    bool runCommandDetached(const std::string &cmd)
+    bool runCommandDetached(const std::filesystem::path &exePath, const std::string &argString)
     {
 #if defined(_WIN32)
-        STARTUPINFOA si{};
-        PROCESS_INFORMATION pi{};
-        si.cb = sizeof(si);
+        // Use ShellExecuteExW: it matches Explorer (double-click) behavior and accepts
+        // parameters separately (no weird quoting of the exe path). See MS docs for ShellExecuteEx.
+        std::wstring exeW = exePath.wstring();
+        std::wstring paramsW = utf8_to_wstring(argString);
 
-        std::string mutableCmd = cmd; // Windows API wants mutable buffer
-        char *cmdline = mutableCmd.data();
+        SHELLEXECUTEINFOW sei{};
+        sei.cbSize = sizeof(sei);
+        sei.fMask = SEE_MASK_NOCLOSEPROCESS; // if we want, we can get hProcess; we'll close it.
+        sei.hwnd = NULL;
+        sei.lpVerb = L"open";
+        sei.lpFile = exeW.c_str(); // executable or document
+        sei.lpParameters = paramsW.empty() ? nullptr : paramsW.c_str();
+        sei.lpDirectory = NULL;
+        sei.nShow = SW_SHOWNORMAL;
 
-        BOOL ok = CreateProcessA(
-            nullptr,          // application name
-            cmdline,          // command line
-            nullptr,          // process security
-            nullptr,          // thread security
-            FALSE,            // handle inheritance
-            DETACHED_PROCESS, // don't attach to parent's console, no forced hiding
-            nullptr,          // environment
-            nullptr,          // working directory
-            &si,              // startup info
-            &pi               // process info
-        );
-
-        if (!ok)
+        if (!ShellExecuteExW(&sei))
         {
+            // failed to launch
             return false;
         }
 
-        // Clean up handles, we don't care about them
-        CloseHandle(pi.hProcess);
-        CloseHandle(pi.hThread);
+        // If ShellExecuteEx returned a process handle, close it (we're detached).
+        if (sei.hProcess)
+        {
+            CloseHandle(sei.hProcess);
+        }
         return true;
+
 #else
+        // Build argv: argv[0] = exePath, rest from parsed argString
+        std::string exeStr = exePath.string();
+        std::vector<std::string> tokens = splitArgString(argString);
+
+        // Build argv array (char* const [])
+        std::vector<char *> argv;
+        argv.reserve(1 + tokens.size() + 1);
+        argv.push_back(const_cast<char *>(exeStr.c_str()));
+        for (auto &t : tokens)
+            argv.push_back(const_cast<char *>(t.c_str()));
+        argv.push_back(nullptr);
+
         pid_t pid = fork();
         if (pid < 0)
         {
             return false; // fork failed
         }
-        if (pid == 0)
+        if (pid > 0)
         {
-            // child process
-            setsid(); // new session, no controlling terminal
-            execl("/bin/sh", "sh", "-c", cmd.c_str(), (char *)nullptr);
-            _exit(127); // exec failed
+            // parent: don't wait, return success
+            return true;
         }
-        // parent just returns
-        return true;
+
+        // child
+        // detach from controlling terminal / session
+        setsid();
+
+        // Optional: redirect stdin/out/err to /dev/null to avoid tying to parent's fds.
+        // (If you *want* child to inherit parent's stdout/stderr, remove these steps.)
+        int fd = open("/dev/null", O_RDWR);
+        if (fd != -1)
+        {
+            dup2(fd, STDIN_FILENO);
+            dup2(fd, STDOUT_FILENO);
+            dup2(fd, STDERR_FILENO);
+            if (fd > 2)
+                close(fd);
+        }
+
+        // execv expects a NULL-terminated array of char* with argv[0] typically the program name
+        execv(exeStr.c_str(), argv.data());
+        // execv returns only on failure:
+        _exit(127);
 #endif
     }
 

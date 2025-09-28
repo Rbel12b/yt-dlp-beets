@@ -1,7 +1,7 @@
 thirdparty/windows
 thirdparty/linux
 build
-build-win
+build*
 _CPack_Packages
 yt-dlp-beets*.AppImage
 yt-dlp-beets*.exe

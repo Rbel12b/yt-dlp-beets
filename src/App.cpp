@@ -133,8 +133,9 @@ int App::run(int argc, char **argv, std::filesystem::path logFile)
             state.downloadUpdate = false;
             state.inProgressText = "Donwloading update...";
             state.commandInProgress = true;
-            if (state.updater && state.updater->donwloadUpdate(state))
+            if (state.updater && !state.updater->donwloadUpdate(state))
             {
+                state.readyForUpdate = true;
                 state.progamShouldExit = true;
             }
             else
@@ -174,6 +175,7 @@ int App::run(int argc, char **argv, std::filesystem::path logFile)
             state.beets.import = false;
         }
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        std::cout.flush();
     }
 
     renderer.join();

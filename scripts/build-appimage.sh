@@ -2,8 +2,8 @@
 set -e
 
 APP=yt-dlp-beets
-VERSION=$(cat .version)
-BUILD_DIR=build
+VERSION=$(cat yt-dlp-beets.version)
+BUILD_DIR=build-linux
 APPDIR=$BUILD_DIR/AppDir
 
 # 1. Configure + build

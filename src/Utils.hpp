@@ -50,7 +50,7 @@ namespace Utils
 
     bool runInteractiveTerminal(const std::string &command);
 
-    bool runCommandDetached(const std::string &cmd);
+    bool runCommandDetached(const std::filesystem::path &exePath, const std::string &argString);
 
     /**
      * execute a command and return the output.
