@@ -118,7 +118,7 @@ int App::run(int argc, char **argv, std::filesystem::path logFile)
             state.inProgressText = "Setting up Python environment...";
             state.commandProgress = -1;
             state.commandInProgress = true;
-            if (PythonSetup::SetupPythonEnv(pythonExe) != 0)
+            if (PythonSetup::SetupPythonEnv(pythonExe, state) != 0)
             {
                 state.showFile.errorLog = true;
                 state.showFile.enabled = true;

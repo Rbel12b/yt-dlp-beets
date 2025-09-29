@@ -4,6 +4,7 @@
 #include <iostream>
 #include <fstream>
 #include "Utils.hpp"
+#include "AppState.hpp"
 
 #ifdef _WIN32
 #include <windows.h>
@@ -16,7 +17,7 @@ namespace fs = std::filesystem;
 namespace PythonSetup
 {
 
-    int SetupPythonEnv(const fs::path &pythonExe)
+    int SetupPythonEnv(const fs::path &pythonExe, AppState& state)
     {
         fs::path dataDir = Utils::getUserDataDir();
         fs::path venvDir = dataDir / "venv";
@@ -31,7 +32,7 @@ namespace PythonSetup
             if (!fs::exists(getPip))
             {
                 std::string url = "https://bootstrap.pypa.io/get-pip.py";
-                if (!Utils::downloadFile(url, getPip.string()))
+                if (!Utils::downloadFile(url, getPip.string(), state))
                 {
                     std::cerr << "Failed to download get-pip.py\n";
                     return 1;
@@ -88,7 +89,7 @@ namespace PythonSetup
             if (!fs::exists(getPip))
             {
                 std::string url = "https://bootstrap.pypa.io/get-pip.py";
-                if (!Utils::downloadFile(url, getPip.string()))
+                if (!Utils::downloadFile(url, getPip.string(), state))
                 {
                     std::cerr << "Failed to download get-pip.py\n";
                     return 1;
