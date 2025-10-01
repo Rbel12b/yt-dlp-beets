@@ -137,7 +137,7 @@ void yt_dlp_utils::donwload(AppState &state)
         return;
     }
 
-    std::string yt_dlp_cmd = "\"" + Utils::getBundledExePath("yt-dlp").string() + "\""
+    std::string yt_dlp_cmd = "\"" + Utils::getBundledExePath("yt-dlp").string() + "\"";
 
     if (_download.audioOnly)
     {

@@ -215,16 +215,31 @@ if(WIN32)
     )
     install(DIRECTORY ${CMAKE_SOURCE_DIR}/thirdparty/windows/python/ DESTINATION python)
 
-    install(FILES "$<TARGET_FILE:CURL::libcurl>" DESTINATION .)
+    set(LDD_EXECUTABLE "mingw-ldd")
 
-    # Path to the SDL2 runtime DLL
-    find_file(SDL2_DLL NAMES SDL2.dll PATHS ${SDL2_DIR} PATH_SUFFIXES bin)
+    install(CODE "
+        message(STATUS \"Scanning dependencies for: ${CMAKE_BINARY_DIR}/${APP_EXECUTABLE}.exe\")
+        execute_process(
+            COMMAND \"${LDD_EXECUTABLE}\" --dll-lookup-dir /usr/x86_64-w64-mingw32/bin -- \"${CMAKE_BINARY_DIR}/${APP_EXECUTABLE}.exe\"
+            OUTPUT_VARIABLE ldd_out
+            RESULT_VARIABLE ldd_res
+        )
+        if (NOT \${ldd_res} EQUAL 0)
+            message(FATAL_ERROR \"ntldd failed: \${ldd_res}\")
+        endif()
 
-    if(SDL2_DLL)
-        install(FILES ${SDL2_DLL} DESTINATION .)
-    else()
-        message(WARNING "SDL2.dll not found — you need to set SDL2_DIR or copy manually")
-    endif()
+        # Parse ntldd output: each line looks like 'libcurl-4.dll => /usr/.../libcurl-4.dll'
+        string(REPLACE \"\\n\" \";\" ldd_lines \"\${ldd_out}\")
+        foreach(line \${ldd_lines})
+            if (line MATCHES \".*=>[ ]+([^ ]+)\")
+                set(dll \"\${CMAKE_MATCH_1}\")
+                if (EXISTS \"\${dll}\")
+                    file(INSTALL DESTINATION \"\${CMAKE_INSTALL_PREFIX}\" TYPE FILE FILES \"\${dll}\")
+                    message(STATUS \"Installed runtime DLL: \${dll}\")
+                endif()
+            endif()
+        endforeach()
+    ")
 endif()
 
 # --- CPack configuration ---

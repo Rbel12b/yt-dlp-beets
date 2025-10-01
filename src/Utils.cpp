@@ -140,24 +140,32 @@ namespace Utils
 
     std::filesystem::path getExecutable()
     {
-        std::filesystem::path exeDir;
+        std::filesystem::path exePath;
 #ifdef _WIN32
         char buffer[MAX_PATH];
         DWORD len = GetModuleFileNameA(nullptr, buffer, MAX_PATH);
         if (len != 0)
         {
-            exeDir = std::filesystem::path(buffer);
+            exePath = std::filesystem::path(buffer);
         }
 #else
-        char buffer[PATH_MAX];
-        ssize_t len = readlink("/proc/self/exe", buffer, sizeof(buffer) - 1);
-        if (len != -1)
+        // AppImage provides its own path in APPIMAGE
+        if (const char *appImage = std::getenv("APPIMAGE"))
         {
-            buffer[len] = '\0';
-            exeDir = std::filesystem::path(buffer);
+            exePath = std::filesystem::path(appImage);
+        }
+        else
+        {
+            char buffer[PATH_MAX];
+            ssize_t len = readlink("/proc/self/exe", buffer, sizeof(buffer) - 1);
+            if (len != -1)
+            {
+                buffer[len] = '\0';
+                exePath = std::filesystem::path(buffer);
+            }
         }
 #endif
-        return exeDir;
+        return exePath;
     }
 
     std::filesystem::path getUserDataDir()
@@ -231,11 +239,13 @@ namespace Utils
         if (!ofs)
         {
             curl_easy_cleanup(curl);
+            std::cerr << "Failed to open file for write: " << dest << "\n";
             return false;
         }
 
         curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
         curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
+        curl_easy_setopt(curl, CURLOPT_USERAGENT, "curl/7.81.0");
         curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, writeFileCallback);
         curl_easy_setopt(curl, CURLOPT_WRITEDATA, &ofs);
 
@@ -247,6 +257,9 @@ namespace Utils
         CURLcode res = curl_easy_perform(curl);
         curl_easy_cleanup(curl);
         ofs.close();
+
+        if (res != CURLE_OK)
+            std::cerr << "Download failed: " << curl_easy_strerror(res) << std::endl;
 
         return res == CURLE_OK;
     }
