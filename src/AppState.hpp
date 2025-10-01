@@ -9,6 +9,7 @@ class AppState;
 #include <filesystem>
 #include <string>
 #include <vector>
+#include <atomic>
 #include "Updater.hpp"
 // #include "process_terminal.hpp"
 
@@ -29,6 +30,8 @@ public:
     bool pythonSetupComplete = false;
     bool commandInProgress = false;
     std::string inProgressText = "";
+    int commandProgress = -1;
+    bool commandProgressDisabled = true;
 
     std::filesystem::path logFile;
 

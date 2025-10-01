@@ -13,7 +13,7 @@
         {
             "name": "Win32",
             "includePath": [
-                "/home/abel/Programs/yt-dlp-beets/**"
+                "${workspaceFolder}/**"
             ],
             "defines": [],
             "cStandard": "c17",

@@ -1,4 +1,3 @@
-// Utils.cpp
 #include "Utils.hpp"
 #include <filesystem>
 #include <cstdlib>
@@ -8,6 +7,8 @@
 #include <array>
 #include <memory>
 #include <vector>
+#include <curl/curl.h>
+#include <AppState.hpp>
 
 #ifdef _WIN32
 #include <windows.h>
@@ -139,24 +140,32 @@ namespace Utils
 
     std::filesystem::path getExecutable()
     {
-        std::filesystem::path exeDir;
+        std::filesystem::path exePath;
 #ifdef _WIN32
         char buffer[MAX_PATH];
         DWORD len = GetModuleFileNameA(nullptr, buffer, MAX_PATH);
         if (len != 0)
         {
-            exeDir = std::filesystem::path(buffer);
+            exePath = std::filesystem::path(buffer);
         }
 #else
-        char buffer[PATH_MAX];
-        ssize_t len = readlink("/proc/self/exe", buffer, sizeof(buffer) - 1);
-        if (len != -1)
+        // AppImage provides its own path in APPIMAGE
+        if (const char *appImage = std::getenv("APPIMAGE"))
         {
-            buffer[len] = '\0';
-            exeDir = std::filesystem::path(buffer);
+            exePath = std::filesystem::path(appImage);
+        }
+        else
+        {
+            char buffer[PATH_MAX];
+            ssize_t len = readlink("/proc/self/exe", buffer, sizeof(buffer) - 1);
+            if (len != -1)
+            {
+                buffer[len] = '\0';
+                exePath = std::filesystem::path(buffer);
+            }
         }
 #endif
-        return exeDir;
+        return exePath;
     }
 
     std::filesystem::path getUserDataDir()
@@ -195,11 +204,64 @@ namespace Utils
         return dataDir;
     }
 
-    bool downloadFile(const std::string &url, const std::filesystem::path &dest)
+    static size_t writeFileCallback(void *ptr, size_t size, size_t nmemb, void *stream)
     {
-        std::string cmd = "curl -L -o \"" + dest.string() + "\" \"" + url + "\"";
-        int ret = runCommand(cmd);
-        return ret == 0;
+        std::ofstream *ofs = static_cast<std::ofstream *>(stream);
+        ofs->write(static_cast<char *>(ptr), size * nmemb);
+        return size * nmemb;
+    }
+
+    static int progressCallback(void *clientp,
+                                curl_off_t dltotal, curl_off_t dlnow,
+                                curl_off_t ultotal, curl_off_t ulnow)
+    {
+        AppState *state = static_cast<AppState *>(clientp);
+
+        if (dltotal > 0)
+        {
+            int percent = static_cast<int>((dlnow * 100) / dltotal);
+            state->commandProgress = percent;
+        }
+        else
+        {
+            state->commandProgress = 0;
+        }
+        return 0; // return non-zero to abort
+    }
+
+    bool downloadFile(const std::string &url, const std::filesystem::path &dest, AppState &state)
+    {
+        CURL *curl = curl_easy_init();
+        if (!curl)
+            return false;
+
+        std::ofstream ofs(dest, std::ios::binary);
+        if (!ofs)
+        {
+            curl_easy_cleanup(curl);
+            std::cerr << "Failed to open file for write: " << dest << "\n";
+            return false;
+        }
+
+        curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
+        curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
+        curl_easy_setopt(curl, CURLOPT_USERAGENT, "curl/7.81.0");
+        curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, writeFileCallback);
+        curl_easy_setopt(curl, CURLOPT_WRITEDATA, &ofs);
+
+        // Progress callback
+        curl_easy_setopt(curl, CURLOPT_XFERINFOFUNCTION, progressCallback);
+        curl_easy_setopt(curl, CURLOPT_XFERINFODATA, &state);
+        curl_easy_setopt(curl, CURLOPT_NOPROGRESS, 0L);
+
+        CURLcode res = curl_easy_perform(curl);
+        curl_easy_cleanup(curl);
+        ofs.close();
+
+        if (res != CURLE_OK)
+            std::cerr << "Download failed: " << curl_easy_strerror(res) << std::endl;
+
+        return res == CURLE_OK;
     }
 
     int runCommand(const std::string &cmd)
@@ -492,8 +554,9 @@ namespace Utils
 #ifdef _WIN32
         licensePath = getExecutableDir() / "licenses" / "LICENSES_COMBINED.txt";
 #else
-        const char* appdir = std::getenv("APPDIR");
-        if (!appdir) {
+        const char *appdir = std::getenv("APPDIR");
+        if (!appdir)
+        {
             std::cerr << "APPDIR not set!\n";
             licensePath = getExecutableDir() / ".." / "thirdparty" / "licenses" / "LICENSES_COMBINED.txt";
         }

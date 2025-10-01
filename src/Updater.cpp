@@ -6,7 +6,7 @@
 bool Updater::checkUpdate(AppState& state)
 {
     auto versionFilePath = Utils::getUserDataDir() / ".version";
-    if (!Utils::downloadFile(state.repoUrl + "/releases/latest/download/yt-dlp-beets.version", versionFilePath))
+    if (!Utils::downloadFile(state.repoUrl + "/releases/latest/download/yt-dlp-beets.version", versionFilePath, state))
     {
         std::cout << "Failed to get latest version number";
         return false;
@@ -35,11 +35,11 @@ bool Updater::checkUpdate(AppState& state)
     return false;
 }
 
-bool Updater::donwloadUpdate(AppState state)
+bool Updater::donwloadUpdate(AppState& state)
 {
 #ifdef _WIN32
     auto newExePath = Utils::getUserDataDir() / "yt-dlp-beets-installer.exe";
-    if (!Utils::downloadFile(state.repoUrl + "/releases/latest/download/yt-dlp-beets-installer-win64.exe", newExePath))
+    if (!Utils::downloadFile(state.repoUrl + "/releases/latest/download/yt-dlp-beets-installer-win64.exe", newExePath, state))
     {
         std::cout << "Failed to get latest appimage";
         return true;
@@ -47,7 +47,7 @@ bool Updater::donwloadUpdate(AppState state)
 #else
     auto exePath = Utils::getExecutable();
     auto newExePath = exePath.string() + ".new";
-    if (!Utils::downloadFile(state.repoUrl + "/releases/latest/download/yt-dlp-beets.AppImage", newExePath))
+    if (!Utils::downloadFile(state.repoUrl + "/releases/latest/download/yt-dlp-beets.AppImage", newExePath, state))
     {
         std::cout << "Failed to get latest appimage";
         return true;
@@ -82,7 +82,7 @@ void Updater::update(AppState& state)
     Utils::runCommand("chmod +x \"" + exePath.string() + "\"");
     if (!Utils::runCommandDetached(exePath, ""))
     {
-        std::cout << "Failed to new AppIamge: " << newExePath << "\n";
+        std::cout << "Failed to start new AppIamge: " << newExePath << "\n";
     }
 #endif
 }
