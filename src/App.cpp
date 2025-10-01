@@ -32,8 +32,8 @@ App::App()
     state.audioDir = Utils::getMusicDir();
     state.videoDir = Utils::getVideosDir();
     state.tempAudioDir = std::filesystem::path(Utils::getDownloadsDir()) / "Music";
-    std::string versionStr(reinterpret_cast<const char*>(___yt_dlp_beets_version),
-        static_cast<size_t>(___yt_dlp_beets_version_len));
+    std::string versionStr(reinterpret_cast<const char *>(___yt_dlp_beets_version),
+                           static_cast<size_t>(___yt_dlp_beets_version_len));
     state.version = new Version("");
     (*state.version) = versionStr;
     state.updater = new Updater();
@@ -51,15 +51,18 @@ void App::render()
 
     if (state.commandInProgress)
     {
-        ImVec2 windowSize = ImVec2(300, 100);
-        ImGui::SetNextWindowPos(ImVec2((state.mainWindowSize.x - windowSize.x) * 0.5f, (state.mainWindowSize.y - windowSize.y) * 0.5f), ImGuiCond_Always);
-        ImGui::SetNextWindowSize(windowSize, ImGuiCond_Always);
-        ImGui::Begin("Setup", nullptr, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoTitleBar);
+        ImGui::OpenPopup("inprogress");
+    }
+    ImVec2 windowSize = ImVec2(300, 100);
+    ImGui::SetNextWindowPos(ImVec2((state.mainWindowSize.x - windowSize.x) * 0.5f, (state.mainWindowSize.y - windowSize.y) * 0.5f), ImGuiCond_Always);
+    ImGui::SetNextWindowSize(windowSize, ImGuiCond_Always);
+    if (ImGui::BeginPopupModal("inprogress", nullptr, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoTitleBar))
+    {
         const char *text = state.inProgressText.c_str();
         auto textSize = ImGui::CalcTextSize(text);
         ImGui::SetCursorPos(ImVec2((windowSize.x - textSize.x) * 0.5f, (windowSize.y - textSize.y) * 0.5f - 10));
         ImGui::Text(text);
-        if (state.commandProgress < 0)
+        if (state.commandProgressDisabled || state.commandProgress < 0)
         {
             ImGui::SetCursorPos(ImVec2((windowSize.x - 30) * 0.5f, (windowSize.y - 30) * 0.5f + 10));
             ImGui::Spinner("##spinner", 15.0f, 4, ImGui::GetColorU32(ImGuiCol_ButtonHovered));
@@ -68,8 +71,12 @@ void App::render()
         {
             ImGui::ProgressBar((float)state.commandProgress / 100);
         }
+
+        if (!state.commandInProgress)
+        {
+            ImGui::CloseCurrentPopup();
+        }
         ImGui::End();
-        return;
     }
     gui.render(state);
 }
@@ -117,6 +124,7 @@ int App::run(int argc, char **argv, std::filesystem::path logFile)
         {
             state.inProgressText = "Setting up Python environment...";
             state.commandProgress = -1;
+            state.commandProgressDisabled = true;
             state.commandInProgress = true;
             if (PythonSetup::SetupPythonEnv(pythonExe, state) != 0)
             {
@@ -135,6 +143,8 @@ int App::run(int argc, char **argv, std::filesystem::path logFile)
             }
             state.commandInProgress = false;
             state.pythonSetupComplete = true;
+            state.commandProgress = -1;
+            state.commandProgressDisabled = false;
             if (state.updater && state.updater->checkUpdate(state))
             {
                 state.newVersionPopup = true;
@@ -144,6 +154,7 @@ int App::run(int argc, char **argv, std::filesystem::path logFile)
         {
             state.downloadUpdate = false;
             state.commandProgress = 0;
+            state.commandProgressDisabled = false;
             state.inProgressText = "Donwloading update...";
             state.commandInProgress = true;
             if (state.updater && !state.updater->donwloadUpdate(state))
@@ -184,8 +195,8 @@ int App::run(int argc, char **argv, std::filesystem::path logFile)
             else
             {
                 std::cout << "Importing to beets library.\n";
-                Utils::runInteractiveTerminal(pythonPath.string() + 
-                    " -m beets import \"" + state.beets.dir.string() + "\"");
+                Utils::runInteractiveTerminal(pythonPath.string() +
+                                              " -m beets import \"" + state.beets.dir.string() + "\"");
             }
             state.beets.import = false;
         }

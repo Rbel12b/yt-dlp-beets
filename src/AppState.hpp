@@ -31,6 +31,7 @@ public:
     bool commandInProgress = false;
     std::string inProgressText = "";
     int commandProgress = -1;
+    bool commandProgressDisabled = true;
 
     std::filesystem::path logFile;
 
