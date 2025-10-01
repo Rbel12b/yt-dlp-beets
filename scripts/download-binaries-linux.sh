@@ -15,12 +15,6 @@ download_file() {
     curl -L -o "$output_path" "$url"
 }
 
-# Download yt-dlp
-YTDLP_URL="https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp_linux"
-YTDLP_PATH="$THIRDPARTY_DIR/yt-dlp"
-download_file "$YTDLP_URL" "$YTDLP_PATH"
-chmod +x "$YTDLP_PATH"
-
 # Download FFmpeg
 FFMPEG_URL="https://johnvansickle.com/ffmpeg/releases/ffmpeg-release-amd64-static.tar.xz"
 FFMPEG_TAR_PATH="$THIRDPARTY_DIR/ffmpeg.tar.xz"
