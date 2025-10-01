@@ -3,6 +3,7 @@
 #include <cstring>
 #include <algorithm>
 #include "Utils.hpp"
+#include "python_setup.hpp"
 #include <iostream>
 
 std::vector<std::string> yt_dlp_utils::parseFlags(const char *flags_str, int n)
@@ -138,10 +139,14 @@ void yt_dlp_utils::donwload(AppState &state)
         return;
     }
 
-    std::string yt_dlp_cmd = "\"" + Utils::getBundledExePath("yt-dlp").string() + "\"";
+    std::string yt_dlp_cmd = PythonSetup::getPythonScriptPath("yt-dlp").string();
+
+#if _WIN32
+    yt_dlp_cmd = "\"" + yt_dlp_cmd + "\"";
+#endif 
 
     yt_dlp_cmd += " " + std::string(state.download.flagsBuffer);
-    
+
     if (_download.audioOnly)
     {
         yt_dlp_cmd += " --extract-audio --audio-format mp3 --embed-thumbnail --add-metadata"
@@ -153,6 +158,9 @@ void yt_dlp_utils::donwload(AppState &state)
         yt_dlp_cmd += " \"" + (state.videoDir / "%(title)s [%(id)s].%(ext)s").string() + "\"";
     }
 
+#if _WIN32
+    yt_dlp_cmd += " --ffmpeg-location \"" + Utils::getBundledExePath("ffmpeg").parent_path().string() + "\"";
+#endif 
 
     yt_dlp_cmd += " \"" + std::string(_download.urlBuffer) + "\"";
 

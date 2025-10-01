@@ -113,7 +113,7 @@ namespace PythonSetup
 
         // 3. Install beets with extras
         std::string beetsCmd = "\"" + venvPython.string() + "\" -m pip install --upgrade pip "
-                                                            "beets[fetchart,lyrics,embedart,chroma]";
+                                                            "beets[fetchart,lyrics,embedart,chroma] yt-dlp";
         std::cout << "Installing beets: " << beetsCmd << std::endl;
         if (Utils::runCommand(beetsCmd) != 0)
         {
@@ -135,6 +135,18 @@ namespace PythonSetup
         fs::path venvPython = venvDir / "bin" / "python3";
 #endif
         return venvPython;
+    }
+
+    fs::path getPythonScriptPath(std::string executable)
+    {
+        fs::path dataDir = Utils::getUserDataDir();
+        fs::path venvDir = dataDir / "venv";
+#ifdef _WIN32
+        fs::path path = venvDir / "Scripts" / (executable + ".exe");
+#else
+        fs::path path = venvDir / "bin" / executable;
+#endif
+        return path;
     }
 
 } // namespace PythonSetup

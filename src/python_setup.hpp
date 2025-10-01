@@ -10,6 +10,7 @@ namespace PythonSetup
     // pythonExe: path to embedded python on Windows, system python on Linux
     int SetupPythonEnv(const std::filesystem::path &pythonExe, AppState& state);
     std::filesystem::path getPythonPath();
+    std::filesystem::path getPythonScriptPath(std::string executable);
 };
 
 #endif // PYTHON_SETUP_HPP

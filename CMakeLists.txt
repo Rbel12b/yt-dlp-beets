@@ -167,6 +167,12 @@ add_custom_command(
   COMMAND cat ${CMAKE_SOURCE_DIR}/thirdparty/licenses/LICENSE.yt-dlp.txt >> ${PROJECT_LICENSES_COMBINED}
   COMMAND echo "" >> ${PROJECT_LICENSES_COMBINED}
   COMMAND echo "" >> ${PROJECT_LICENSES_COMBINED}
+  COMMAND echo "beets License:" >> ${PROJECT_LICENSES_COMBINED}
+  COMMAND echo "------------" >> ${PROJECT_LICENSES_COMBINED}
+  COMMAND echo "" >> ${PROJECT_LICENSES_COMBINED}
+  COMMAND cat ${CMAKE_SOURCE_DIR}/thirdparty/licenses/LICENSE.beets.txt >> ${PROJECT_LICENSES_COMBINED}
+  COMMAND echo "" >> ${PROJECT_LICENSES_COMBINED}
+  COMMAND echo "" >> ${PROJECT_LICENSES_COMBINED}
   COMMAND echo "python License:" >> ${PROJECT_LICENSES_COMBINED}
   COMMAND echo "-------------" >> ${PROJECT_LICENSES_COMBINED}
   COMMAND echo "" >> ${PROJECT_LICENSES_COMBINED}
@@ -174,6 +180,7 @@ add_custom_command(
   DEPENDS
     ${CMAKE_SOURCE_DIR}/LICENSE
     ${CMAKE_SOURCE_DIR}/thirdparty/licenses/LICENSE.ffmpeg.txt
+    ${CMAKE_SOURCE_DIR}/thirdparty/licenses/LICENSE.beets.txt
     ${CMAKE_SOURCE_DIR}/thirdparty/licenses/LICENSE.yt-dlp.txt
     ${CMAKE_SOURCE_DIR}/thirdparty/licenses/LICENSE.python.txt
   COMMENT "Combining license files"
@@ -210,7 +217,6 @@ if(WIN32)
     install(FILES
         ${CMAKE_SOURCE_DIR}/thirdparty/windows/ffmpeg.exe
         ${CMAKE_SOURCE_DIR}/thirdparty/windows/ffprobe.exe
-        ${CMAKE_SOURCE_DIR}/thirdparty/windows/yt-dlp.exe
         DESTINATION bin
     )
     install(DIRECTORY ${CMAKE_SOURCE_DIR}/thirdparty/windows/python/ DESTINATION python)

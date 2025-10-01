@@ -15,11 +15,6 @@ download_file() {
     curl -L -o "$output_path" "$url"
 }
 
-# Download yt-dlp
-YTDLP_URL="https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp.exe"
-YTDLP_PATH="$THIRDPARTY_DIR/yt-dlp.exe"
-download_file "$YTDLP_URL" "$YTDLP_PATH"
-
 # Download FFmpeg
 FFMPEG_URL="https://www.gyan.dev/ffmpeg/builds/ffmpeg-release-essentials.zip"
 FFMPEG_ZIP_PATH="$THIRDPARTY_DIR/ffmpeg.zip"
