@@ -7,3 +7,4 @@ yt-dlp-beets*.AppImage
 yt-dlp-beets*.exe
 .vscode/settings.json
 test-libs
+imgui.ini
