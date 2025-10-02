@@ -7,6 +7,7 @@
 #include <iostream>
 #include <json/json.h>
 #include <fstream>
+#include <sstream>
 
 void yt_dlp_utils::donwload(AppState &state)
 {
@@ -30,10 +31,12 @@ void yt_dlp_utils::donwload(AppState &state)
 
     std::cout << yt_dlp_cmd << "\n";
 
-    if (!Utils::runCommand(yt_dlp_cmd))
-    {
-        return;
-    }
+    state.commandInProgress = true;
+    state.commandProgressDisabled = false;
+    state.commandProgress = 0;
+    state.inProgressText = "Downloading";
+    Utils::runCommandOutputCallback(yt_dlp_cmd, std::bind(donwload_callback, &state, std::placeholders::_1));
+    state.commandInProgress = false;
 }
 
 void yt_dlp_utils::createOptionsFile(AppState &state)
@@ -105,4 +108,89 @@ void yt_dlp_utils::createOptionsFile(AppState &state)
     writer["indentation"] = "  "; // use 2 spaces
     file << Json::writeString(writer, options);
     file.close();
+}
+
+void yt_dlp_utils::donwload_callback(AppState *state, const std::string &lineStr)
+{
+    std::cout << lineStr;
+    std::stringstream line(lineStr);
+
+    std::string type;
+    line >> type;
+    if (type == "DOWN")
+    {
+        std::string in_co, percentStr;
+        line >> in_co >> percentStr;
+        size_t index, count;
+        float percent;
+
+        if (in_co.find_first_of('/') == std::string::npos || in_co.find_first_of('/') + 1 > in_co.size())
+        {
+            std::cout << "invalid output from yt-dlp-wrapper: " << lineStr;
+            return;
+        }
+
+        try
+        {
+            index = std::stoull(in_co.substr(0, in_co.find_first_of('/')));
+            count = std::stoull(in_co.substr(in_co.find_first_of('/') + 1));
+            percent = std::stof(percentStr);
+        }
+        catch (std::exception &e)
+        {
+            std::cout << "Error: " << e.what() << "\n";
+            return;
+        }
+
+        if (index < 1 || count < 1)
+        {
+            state->commandProgress = 0;
+            return;
+        }
+
+        float playlistProgress = (float)(index - 1) / (float)count * 100;
+        float progress = playlistProgress + (percent / count);
+
+        state->commandProgress = progress;
+    }
+    else if (type == "FINI")
+    {
+        std::string in_co;
+        line >> in_co;
+        size_t index, count;
+
+        if (in_co.find_first_of('/') == std::string::npos || in_co.find_first_of('/') + 1 > in_co.size())
+        {
+            std::cout << "invalid output from yt-dlp-wrapper: " << lineStr;
+            return;
+        }
+
+        try
+        {
+            index = std::stoull(in_co.substr(0, in_co.find_first_of('/')));
+            count = std::stoull(in_co.substr(in_co.find_first_of('/') + 1));
+        }
+        catch (std::exception &e)
+        {
+            std::cout << "Error: " << e.what() << "\n";
+            return;
+        }
+
+        if (index < 1 || count < 1)
+        {
+            state->commandProgress = 0;
+            return;
+        }
+
+        float playlistProgress = (float)(index) / (float)count;
+
+        state->commandProgress = playlistProgress * 100;
+    }
+    else if (type == "ERRO")
+    {
+        std::cout << "Error [yt-dlp-wrapper]: " << lineStr;
+    }
+    else
+    {
+    }
 }

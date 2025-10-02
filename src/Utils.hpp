@@ -5,6 +5,7 @@
 #include <string>
 #include <filesystem>
 #include "AppState.hpp"
+#include <functional>
 
 #ifdef _WIN32
 #include <windows.h>
@@ -64,7 +65,9 @@ namespace Utils
      */
     std::string runCommandOutput(const std::string& cmd);
     
-
+    int runCommandOutputCallback(
+        const std::string &cmd,
+        std::function<void(const std::string &)> lineCallback);
 }
 
 #endif // UTILS_HPP

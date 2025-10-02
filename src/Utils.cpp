@@ -8,7 +8,8 @@
 #include <memory>
 #include <vector>
 #include <curl/curl.h>
-#include <AppState.hpp>
+#include "AppState.hpp"
+#include <functional>
 
 #ifdef _WIN32
 #include <windows.h>
@@ -564,6 +565,133 @@ namespace Utils
         execv(exeStr.c_str(), argv.data());
         // execv returns only on failure:
         _exit(127);
+#endif
+    }
+
+    int runCommandOutputCallback(
+        const std::string &cmd,
+        std::function<void(const std::string &)> lineCallback)
+    {
+#if defined(_WIN32)
+        SECURITY_ATTRIBUTES sa{};
+        sa.nLength = sizeof(sa);
+        sa.bInheritHandle = TRUE;
+
+        HANDLE hRead = NULL, hWrite = NULL;
+        if (!CreatePipe(&hRead, &hWrite, &sa, 0))
+        {
+            std::cerr << "Failed to create pipe\n";
+            return 1;
+        }
+        SetHandleInformation(hRead, HANDLE_FLAG_INHERIT, 0);
+
+        STARTUPINFOA si{};
+        PROCESS_INFORMATION pi{};
+        si.cb = sizeof(si);
+        si.dwFlags = STARTF_USESTDHANDLES | STARTF_USESHOWWINDOW;
+        si.wShowWindow = SW_HIDE;
+        si.hStdOutput = hWrite;
+        si.hStdError = hWrite;
+        si.hStdInput = GetStdHandle(STD_INPUT_HANDLE);
+
+        std::string fullCmd = "cmd /C " + cmd;
+        char *mutableCmd = fullCmd.data();
+
+        if (!CreateProcessA(
+                nullptr, mutableCmd, nullptr, nullptr,
+                TRUE, CREATE_NO_WINDOW, nullptr, nullptr,
+                &si, &pi))
+        {
+            CloseHandle(hRead);
+            CloseHandle(hWrite);
+            std::cerr << "CreateProcess failed\n";
+            return 1;
+        }
+
+        CloseHandle(hWrite); // parent only reads
+
+        std::array<char, 4096> buffer;
+        DWORD bytesRead;
+        std::string lineBuffer;
+        while (ReadFile(hRead, buffer.data(), (DWORD)buffer.size() - 1, &bytesRead, NULL) && bytesRead > 0)
+        {
+            buffer[bytesRead] = '\0';
+            lineBuffer += buffer.data();
+
+            size_t pos = 0;
+            while ((pos = lineBuffer.find('\n')) != std::string::npos)
+            {
+                std::string line = lineBuffer.substr(0, pos + 1);
+                lineCallback(line);
+                lineBuffer.erase(0, pos + 1);
+            }
+        }
+
+        if (!lineBuffer.empty())
+            lineCallback(lineBuffer);
+
+        WaitForSingleObject(pi.hProcess, INFINITE);
+
+        DWORD exitCode = 0;
+        GetExitCodeProcess(pi.hProcess, &exitCode);
+
+        CloseHandle(pi.hProcess);
+        CloseHandle(pi.hThread);
+        CloseHandle(hRead);
+
+        return static_cast<int>(exitCode);
+
+#else
+        int pipefd[2];
+        if (pipe(pipefd) == -1)
+        {
+            std::cerr << "pipe() failed\n";
+            return 1;
+        }
+
+        pid_t pid = fork();
+        if (pid == 0)
+        {
+            // child
+            dup2(pipefd[1], STDOUT_FILENO);
+            dup2(pipefd[1], STDERR_FILENO);
+            close(pipefd[0]);
+            close(pipefd[1]);
+            execl("/bin/sh", "sh", "-c", cmd.c_str(), (char *)NULL);
+            _exit(127); // exec failed
+        }
+
+        // parent
+        close(pipefd[1]);
+        std::array<char, 4096> buffer;
+        ssize_t n;
+        std::string lineBuffer;
+        while ((n = read(pipefd[0], buffer.data(), buffer.size() - 1)) > 0)
+        {
+            buffer[n] = '\0';
+            lineBuffer += buffer.data();
+
+            size_t pos = 0;
+            while ((pos = lineBuffer.find('\n')) != std::string::npos)
+            {
+                std::string line = lineBuffer.substr(0, pos + 1);
+                lineCallback(line);
+                lineBuffer.erase(0, pos + 1);
+            }
+        }
+        close(pipefd[0]);
+
+        if (!lineBuffer.empty())
+            lineCallback(lineBuffer);
+
+        int status = 0;
+        waitpid(pid, &status, 0);
+
+        if (WIFEXITED(status))
+            return WEXITSTATUS(status);
+        else if (WIFSIGNALED(status))
+            return 128 + WTERMSIG(status);
+        return -1;
 #endif
     }
 
