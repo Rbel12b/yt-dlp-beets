@@ -11,7 +11,7 @@ class AppState;
 #include <vector>
 #include <atomic>
 #include "Updater.hpp"
-// #include "process_terminal.hpp"
+#include <cstdint>
 
 class AppState
 {
@@ -28,16 +28,17 @@ public:
     ImVec2 mainWindowSize = ImVec2(0, 0);
 
     bool pythonSetupComplete = false;
-    bool commandInProgress = false;
-    std::string inProgressText = "";
-    int commandProgress = -1;
-    bool commandProgressDisabled = true;
+    struct{
+        bool enabled = false;
+        std::string text = "";
+        int progress = -1;
+        bool progressDisabled = true;
+    } commandInProgress;
 
     std::filesystem::path logFile;
 
     bool startCommand = false;
     std::string startCmdline = "";
-    // ProcessTerminal* processTerm = nullptr;
 
     struct
     {
@@ -51,6 +52,7 @@ public:
             bool noPlaylist = true;
             char selectionBuffer[64];
             std::vector<std::string> flags;
+            size_t displayedIndex = 0;
         } playlist;
     } download;
     

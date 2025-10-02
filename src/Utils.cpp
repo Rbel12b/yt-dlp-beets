@@ -249,11 +249,11 @@ namespace Utils
         if (dltotal > 0)
         {
             int percent = static_cast<int>((dlnow * 100) / dltotal);
-            state->commandProgress = percent;
+            state->commandInProgress.progress = percent;
         }
         else
         {
-            state->commandProgress = 0;
+            state->commandInProgress.progress = 0;
         }
         return 0; // return non-zero to abort
     }

@@ -31,12 +31,20 @@ void yt_dlp_utils::donwload(AppState &state)
 
     std::cout << yt_dlp_cmd << "\n";
 
-    state.commandInProgress = true;
-    state.commandProgressDisabled = false;
-    state.commandProgress = 0;
-    state.inProgressText = "Downloading";
+    state.commandInProgress.enabled = true;
+    state.commandInProgress.progressDisabled = false;
+    state.commandInProgress.progress = 0;
+    if (state.download.playlist.noPlaylist)
+    {
+        state.commandInProgress.text = "Downloading";
+    }
+    else
+    {
+        state.commandInProgress.text = "Downloading playlist";
+        state.download.playlist.displayedIndex = 0;
+    }
     Utils::runCommandOutputCallback(yt_dlp_cmd, std::bind(donwload_callback, &state, std::placeholders::_1));
-    state.commandInProgress = false;
+    state.commandInProgress.enabled = false;
 }
 
 void yt_dlp_utils::createOptionsFile(AppState &state)
@@ -112,7 +120,6 @@ void yt_dlp_utils::createOptionsFile(AppState &state)
 
 void yt_dlp_utils::donwload_callback(AppState *state, const std::string &lineStr)
 {
-    std::cout << lineStr;
     std::stringstream line(lineStr);
 
     std::string type;
@@ -144,14 +151,20 @@ void yt_dlp_utils::donwload_callback(AppState *state, const std::string &lineStr
 
         if (index < 1 || count < 1)
         {
-            state->commandProgress = 0;
+            state->commandInProgress.progress = 0;
             return;
+        }
+
+        if (!state->download.playlist.noPlaylist && state->download.playlist.displayedIndex != index)
+        {
+            state->commandInProgress.text = std::string("Downloading playlist item ") + std::to_string(index) + " of " + std::to_string(count);
+            state->download.playlist.displayedIndex = index;
         }
 
         float playlistProgress = (float)(index - 1) / (float)count * 100;
         float progress = playlistProgress + (percent / count);
 
-        state->commandProgress = progress;
+        state->commandInProgress.progress = progress;
     }
     else if (type == "FINI")
     {
@@ -178,13 +191,19 @@ void yt_dlp_utils::donwload_callback(AppState *state, const std::string &lineStr
 
         if (index < 1 || count < 1)
         {
-            state->commandProgress = 0;
+            state->commandInProgress.progress = 0;
             return;
+        }
+
+        if (!state->download.playlist.noPlaylist && state->download.playlist.displayedIndex != (index + 1) && count >= (index + 1))
+        {
+            state->commandInProgress.text = std::string("Downloading playlist item ") + std::to_string(index + 1) + " of " + std::to_string(count);
+            state->download.playlist.displayedIndex = (index + 1);
         }
 
         float playlistProgress = (float)(index) / (float)count;
 
-        state->commandProgress = playlistProgress * 100;
+        state->commandInProgress.progress = playlistProgress * 100;
     }
     else if (type == "ERRO")
     {

@@ -43,7 +43,7 @@ void App::render()
 {
     state.mainWindowSize = renderer.getWindowSize();
 
-    if (state.commandInProgress)
+    if (state.commandInProgress.enabled)
     {
         ImGui::OpenPopup("inprogress");
     }
@@ -52,21 +52,21 @@ void App::render()
     ImGui::SetNextWindowSize(windowSize, ImGuiCond_Always);
     if (ImGui::BeginPopupModal("inprogress", nullptr, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoTitleBar))
     {
-        const char *text = state.inProgressText.c_str();
+        const char *text = state.commandInProgress.text.c_str();
         auto textSize = ImGui::CalcTextSize(text);
         ImGui::SetCursorPos(ImVec2((windowSize.x - textSize.x) * 0.5f, (windowSize.y - textSize.y) * 0.5f - 10));
         ImGui::Text(text);
-        if (state.commandProgressDisabled || state.commandProgress < 0)
+        if (state.commandInProgress.progressDisabled || state.commandInProgress.progress < 0)
         {
             ImGui::SetCursorPos(ImVec2((windowSize.x - 30) * 0.5f, (windowSize.y - 30) * 0.5f + 10));
             ImGui::Spinner("##spinner", 15.0f, 4, ImGui::GetColorU32(ImGuiCol_ButtonHovered));
         }
         else
         {
-            ImGui::ProgressBar((float)state.commandProgress / 100);
+            ImGui::ProgressBar((float)state.commandInProgress.progress / 100);
         }
 
-        if (!state.commandInProgress)
+        if (!state.commandInProgress.enabled)
         {
             ImGui::CloseCurrentPopup();
         }
@@ -116,15 +116,15 @@ int App::run(int argc, char **argv, std::filesystem::path logFile)
     {
         if (!state.pythonSetupComplete)
         {
-            state.inProgressText = "Setting up Python environment...";
-            state.commandProgress = -1;
-            state.commandProgressDisabled = true;
-            state.commandInProgress = true;
+            state.commandInProgress.text = "Setting up Python environment...";
+            state.commandInProgress.progress = -1;
+            state.commandInProgress.progressDisabled = true;
+            state.commandInProgress.enabled = true;
             if (PythonSetup::SetupPythonEnv(pythonExe, state) != 0)
             {
                 state.showFile.errorLog = true;
                 state.showFile.enabled = true;
-                state.commandInProgress = false;
+                state.commandInProgress.enabled = false;
                 break; // Failed to setup python
             }
             pythonPath = PythonSetup::getPythonPath();
@@ -132,25 +132,25 @@ int App::run(int argc, char **argv, std::filesystem::path logFile)
             {
                 state.showFile.errorLog = true;
                 state.showFile.enabled = true;
-                state.commandInProgress = false;
+                state.commandInProgress.enabled = false;
                 break; // Failed to setup beets
             }
-            state.commandInProgress = false;
             state.pythonSetupComplete = true;
-            state.commandProgress = -1;
-            state.commandProgressDisabled = false;
+            state.commandInProgress.progress = -1;
+            state.commandInProgress.progressDisabled = false;
             if (state.updater && state.updater->checkUpdate(state))
             {
                 state.newVersionPopup = true;
             }
+            state.commandInProgress.enabled = false;
         }
         if (state.downloadUpdate)
         {
             state.downloadUpdate = false;
-            state.commandProgress = 0;
-            state.commandProgressDisabled = false;
-            state.inProgressText = "Donwloading update...";
-            state.commandInProgress = true;
+            state.commandInProgress.progress = 0;
+            state.commandInProgress.progressDisabled = false;
+            state.commandInProgress.text = "Donwloading update...";
+            state.commandInProgress.enabled = true;
             if (state.updater && !state.updater->donwloadUpdate(state))
             {
                 state.readyForUpdate = true;
@@ -161,8 +161,8 @@ int App::run(int argc, char **argv, std::filesystem::path logFile)
                 state.showFile.errorLog = true;
                 state.showFile.enabled = true;
             }
-            state.commandInProgress = false;
-            state.commandProgress = -1;
+            state.commandInProgress.enabled = false;
+            state.commandInProgress.progress = -1;
         }
         if (state.startCommand)
         {
