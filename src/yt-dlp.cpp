@@ -90,6 +90,16 @@ void yt_dlp_utils::createOptionsFile(AppState &state)
         options["postprocessors"] = pp;
     }
 
+    if (state.download.playlist.noPlaylist)
+    {
+        options["noplaylist"] = true;
+    }
+    else
+    {
+        options["yesplaylist"] = true;
+        options["playlist_items"] = std::string(state.download.playlist.selectionBuffer);
+    }
+
     std::ofstream file(state.download.optionsFileName);
     Json::StreamWriterBuilder writer;
     writer["indentation"] = "  "; // use 2 spaces
