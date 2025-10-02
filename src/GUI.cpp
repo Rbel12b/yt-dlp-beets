@@ -161,10 +161,6 @@ void GUI::renderMain(AppState &state)
 
     ImGui::Checkbox("Audio only", &state.download.audioOnly);
 
-    ImGui::Text("yt-dlp flags:");
-    ImGui::SameLine();
-    ImGui::InputText("##yt-dlp_flags", state.download.flagsBuffer, sizeof(state.download.flagsBuffer) - 1);
-
     if (ImGui::Button("Playlist options"))
     {
         state.download.showplaylistOptions = true;
@@ -195,7 +191,6 @@ void GUI::renderPlayListOptions(AppState &state)
     {
         ImGui::OpenPopup("playlist");
         state.download.showplaylistOptions = false;
-        yt_dlp_utils::parseDownloadState(state);
     }
     if (!ImGui::BeginPopupModal("playlist", nullptr, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove))
     {
@@ -211,7 +206,6 @@ void GUI::renderPlayListOptions(AppState &state)
     if (ImGui::Button("Save", ImVec2(120, 0)))
     {
         ImGui::CloseCurrentPopup();
-        yt_dlp_utils::saveFlagsFromState(state);
     }
 
     ImGui::SetItemDefaultFocus();

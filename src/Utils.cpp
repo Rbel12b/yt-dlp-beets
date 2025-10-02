@@ -25,6 +25,7 @@
 
 namespace Utils
 {
+    static const std::string appName = "yt-dlp-beets";
 
     // Simple splitter: supports double quotes and backslash escaping.
     // Not a full shell parser, but handles common cases like:
@@ -170,7 +171,6 @@ namespace Utils
 
     std::filesystem::path getUserDataDir()
     {
-        static const std::string appName = "yt-dlp-beets";
         std::filesystem::path dataDir;
 
 #ifdef _WIN32
@@ -202,6 +202,34 @@ namespace Utils
         }
 
         return dataDir;
+    }
+
+    std::filesystem::path getTempDir()
+    {
+        std::filesystem::path tempDir;
+
+#ifdef _WIN32
+        char path[MAX_PATH];
+        DWORD len = GetTempPathA(MAX_PATH, path);
+        if (len > 0 && len < MAX_PATH)
+        {
+            tempDir = path;
+            tempDir /= appName;
+        }
+#else
+        const char *tmp = getenv("TMPDIR");
+        if (!tmp || *tmp == '\0')
+            tmp = "/tmp";
+        tempDir = tmp;
+        tempDir /= appName;
+#endif
+
+        if (!tempDir.empty() && !std::filesystem::exists(tempDir))
+        {
+            std::filesystem::create_directories(tempDir);
+        }
+
+        return tempDir;
     }
 
     static size_t writeFileCallback(void *ptr, size_t size, size_t nmemb, void *stream)
@@ -548,6 +576,15 @@ namespace Utils
 #endif
     }
 
+    std::filesystem::path getBundledFilePath(const std::filesystem::path &name)
+    {
+#ifdef _WIN32
+        return getExecutableDir() / name;
+#else
+        return name;
+#endif
+    }
+
     std::filesystem::path getLicensePath()
     {
         std::filesystem::path licensePath;
@@ -562,7 +599,7 @@ namespace Utils
         }
         else
         {
-            licensePath = std::filesystem::path(appdir) / "usr/share/licenses/yt-dlp-beets/LICENSES_COMBINED.txt";
+            licensePath = std::filesystem::path(appdir) / "usr/share/licenses/" / appName / "LICENSES_COMBINED.txt";
         }
 #endif
         return licensePath;

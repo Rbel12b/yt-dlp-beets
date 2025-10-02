@@ -44,8 +44,8 @@ public:
         bool start = false;
         bool audioOnly = true;
         char urlBuffer[1024];
-        char flagsBuffer[1024];
         bool showplaylistOptions = false;
+        std::string optionsFileName = "";
         struct
         {
             bool noPlaylist = true;

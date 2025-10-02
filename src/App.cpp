@@ -20,10 +20,6 @@ App::App()
     {
         state.download.urlBuffer[i] = '\0';
     }
-    for (size_t i = 0; i < sizeof(state.download.flagsBuffer); i++)
-    {
-        state.download.flagsBuffer[i] = '\0';
-    }
     for (size_t i = 0; i < sizeof(state.download.playlist.selectionBuffer); i++)
     {
         state.download.playlist.selectionBuffer[i] = '\0';
@@ -37,8 +33,6 @@ App::App()
     state.version = new Version("");
     (*state.version) = versionStr;
     state.updater = new Updater();
-
-    strncpy(state.download.flagsBuffer, "--no-playlist", sizeof(state.download.flagsBuffer) - 1);
 }
 
 App::~App()

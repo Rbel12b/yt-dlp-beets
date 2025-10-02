@@ -37,6 +37,8 @@ set(BEETS_CONFIG_OUT "${CMAKE_BINARY_DIR}/beets.config.yaml.str")
 
 set(PROJECT_LICENSES_COMBINED "${CMAKE_SOURCE_DIR}/thirdparty/licenses/LICENSES_COMBINED.txt")
 
+set(YT_DLP_WRAPPER "${CMAKE_SOURCE_DIR}/resources/yt-dlp-wrapper.py")
+
 # --- Find dependencies ---
 file(GLOB_RECURSE SOURCES CONFIGURE_DEPENDS src/*.cpp)
 
@@ -80,7 +82,7 @@ add_subdirectory(${CMAKE_SOURCE_DIR}/thirdparty/lib/CMakeForImGui EXCLUDE_FROM_A
 find_package(SDL2 CONFIG REQUIRED)
 find_package(CURL REQUIRED)
 
-target_link_libraries(${APP_EXECUTABLE} PRIVATE imgui_core imgui_impl_sdl2 imgui_impl_sdlrenderer2 SDL2::SDL2 CURL::libcurl)
+target_link_libraries(${APP_EXECUTABLE} PRIVATE imgui_core imgui_impl_sdl2 imgui_impl_sdlrenderer2 SDL2::SDL2 CURL::libcurl jsoncpp)
 
 # --- Custom commands: generate icons ---
 
@@ -210,6 +212,7 @@ endif()
 
 # --- Install rules ---
 install(TARGETS ${APP_EXECUTABLE} RUNTIME DESTINATION .)
+install(FILES ${YT_DLP_WRAPPER} RUNTIME DESTINATION .)
 
 # Bundle FFmpeg + Python
 if(WIN32)

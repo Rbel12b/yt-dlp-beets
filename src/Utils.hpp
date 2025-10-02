@@ -26,6 +26,7 @@ namespace Utils
     std::string getMusicDir();
     std::string getDownloadsDir();
     std::filesystem::path getBundledExePath(const std::string &name);
+    std::filesystem::path getBundledFilePath(const std::filesystem::path &name);
     std::filesystem::path getLicensePath();
 
     // Returns the absolute path of the running executable
@@ -36,6 +37,8 @@ namespace Utils
     // Windows -> %LOCALAPPDATA%\yt-dlp-beets
     // Linux   -> $HOME/.config/yt-dlp-beets
     std::filesystem::path getUserDataDir();
+
+    std::filesystem::path getTempDir();
 
     // Cross-platform file download using curl
     // url: remote file URL
