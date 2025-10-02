@@ -23,10 +23,6 @@ mkdir -p "$APPDIR/usr/share/licenses/${APP}/"
 cp "$BUILD_DIR/$APP" "$APPDIR/usr/bin/"
 chmod +x "$APPDIR/usr/bin/$APP"
 
-# 5. Copy third-party Linux executables
-cp "thirdparty/linux/"* "$APPDIR/usr/bin/"
-chmod +x "$APPDIR/usr/bin/"*
-
 cp "thirdparty/licenses/LICENSES_COMBINED.txt" "$APPDIR/usr/share/licenses/${APP}/"
 
 # 6. Copy generated 256x256 icon to AppDir

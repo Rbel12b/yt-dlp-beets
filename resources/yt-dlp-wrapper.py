@@ -58,14 +58,16 @@ def main():
     optionsFileName = sys.argv[1]
 
     if not optionsFileName:
-        print('No options json file provided.', file=sys.stderr)
+        print('ERRO no options file', file=sys.stderr)
+        return
 
     with open(optionsFileName, 'r') as optionsfile:
         options = dict(json.load(optionsfile))
 
     urls = options['urls']
     if not urls:
-        print('No urls provided', file=sys.stderr)
+        print('ERRO no url', file=sys.stderr)
+        return
 
     options.pop('urls')
 

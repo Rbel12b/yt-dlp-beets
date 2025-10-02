@@ -8,6 +8,18 @@
 
 A desktop application for managing and downloading audio files using yt-dlp and beets.
 
+## Installing
+
+Donwload the [latest release](https://github.com/Rbel12b/yt-dlp-beets/releases/latest)
+
+### Windows
+
+Install the program with the installer, or run the executable from the .zip archive (if available)
+
+### Linux
+
+For the linux AppImage python 3.11 and ffmpeg needs to be installed on PATH.
+
 ## CREDITS
 
 - [yt-dlp](https://github.com/yt-dlp/yt-dlp): the core downloading library, licensed under the Unlicense.

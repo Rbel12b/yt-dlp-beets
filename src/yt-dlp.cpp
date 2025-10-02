@@ -24,7 +24,7 @@ void yt_dlp_utils::donwload(AppState &state)
     yt_dlp_cmd = "\"" + yt_dlp_cmd + "\"";
 #endif
 
-    yt_dlp_cmd += " \"" + Utils::getBundledFilePath("../resources/yt-dlp-wrapper.py").string() + "\"";
+    yt_dlp_cmd += " \"" + Utils::getBundledFilePath("yt-dlp-wrapper.py").string() + "\"";
 
     yt_dlp_cmd += " " + state.download.optionsFileName;
 
