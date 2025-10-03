@@ -149,9 +149,9 @@ int App::run(int argc, char **argv, std::filesystem::path logFile)
             state.downloadUpdate = false;
             state.commandInProgress.progress = 0;
             state.commandInProgress.progressDisabled = false;
-            state.commandInProgress.text = "Donwloading update...";
+            state.commandInProgress.text = "Downloading update...";
             state.commandInProgress.enabled = true;
-            if (state.updater && !state.updater->donwloadUpdate(state))
+            if (state.updater && !state.updater->downloadUpdate(state))
             {
                 state.readyForUpdate = true;
                 state.progamShouldExit = true;
@@ -171,7 +171,7 @@ int App::run(int argc, char **argv, std::filesystem::path logFile)
         }
         if (state.download.start)
         {
-            yt_dlp_utils::donwload(state);
+            yt_dlp_utils::download(state);
             state.download.start = false;
         }
         if (state.beets.import)

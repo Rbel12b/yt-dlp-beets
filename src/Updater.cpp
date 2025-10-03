@@ -35,7 +35,7 @@ bool Updater::checkUpdate(AppState& state)
     return false;
 }
 
-bool Updater::donwloadUpdate(AppState& state)
+bool Updater::downloadUpdate(AppState& state)
 {
 #ifdef _WIN32
     auto newExePath = Utils::getUserDataDir() / "yt-dlp-beets-installer.exe";

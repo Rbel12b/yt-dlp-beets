@@ -10,7 +10,7 @@ A gui for [yt-dlp](https://github.com/yt-dlp/yt-dlp) and [beets](https://beets.i
 
 ## Installing
 
-Donwload the [latest release](https://github.com/Rbel12b/yt-dlp-beets/releases/latest)
+Download the [latest release](https://github.com/Rbel12b/yt-dlp-beets/releases/latest)
 
 ### Windows
 
