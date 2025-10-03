@@ -7,9 +7,9 @@
 
 namespace yt_dlp_utils
 {
-    void donwload(AppState &state);
+    void download(AppState &state);
 
     void createOptionsFile(AppState &state);
 
-    void donwload_callback(AppState *state, const std::string &lineStr);
+    void download_callback(AppState *state, const std::string &lineStr);
 };

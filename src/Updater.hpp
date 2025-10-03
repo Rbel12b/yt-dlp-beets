@@ -83,7 +83,7 @@ class Updater
 {
 public:
     bool checkUpdate(AppState& state);
-    bool donwloadUpdate(AppState& state);
+    bool downloadUpdate(AppState& state);
     void update(AppState& state);
 
     bool updateAvailable = false;

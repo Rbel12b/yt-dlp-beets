@@ -161,7 +161,7 @@ void GUI::renderMain(AppState &state)
         state.download.start = true;
     }
 
-    if (ImGui::Button("Import donwloaded files to beets library"))
+    if (ImGui::Button("Import downloaded files to beets library"))
     {
         state.beets.dir = state.tempAudioDir;
         state.beets.pickDir = false;
@@ -190,7 +190,7 @@ void GUI::renderNewVersionPopup(AppState &state)
     ImGui::Dummy(ImVec2(10, 10));
     ImGui::Dummy(ImVec2(10, 10));
     ImGui::SameLine();
-    ImGui::Text("A new version is available,\ndo you want to donwload it?\n(The program will restart)");
+    ImGui::Text("A new version is available,\ndo you want to download it?\n(The program will restart)");
     ImGui::SameLine();
     ImGui::Dummy(ImVec2(10, 10));
 

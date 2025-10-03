@@ -9,7 +9,7 @@
 #include <fstream>
 #include <sstream>
 
-void yt_dlp_utils::donwload(AppState &state)
+void yt_dlp_utils::download(AppState &state)
 {
     auto _download = state.download;
     if (!_download.start)
@@ -43,7 +43,7 @@ void yt_dlp_utils::donwload(AppState &state)
         state.commandInProgress.text = "Downloading playlist";
         state.download.playlist.displayedIndex = 0;
     }
-    Utils::runCommandOutputCallback(yt_dlp_cmd, std::bind(donwload_callback, &state, std::placeholders::_1));
+    Utils::runCommandOutputCallback(yt_dlp_cmd, std::bind(download_callback, &state, std::placeholders::_1));
     state.commandInProgress.enabled = false;
 }
 
@@ -118,7 +118,7 @@ void yt_dlp_utils::createOptionsFile(AppState &state)
     file.close();
 }
 
-void yt_dlp_utils::donwload_callback(AppState *state, const std::string &lineStr)
+void yt_dlp_utils::download_callback(AppState *state, const std::string &lineStr)
 {
     std::cout << lineStr;
     std::stringstream line(lineStr);
