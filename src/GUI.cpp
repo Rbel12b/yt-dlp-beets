@@ -18,16 +18,6 @@ void GUI::render(AppState &state)
     ImVec2 mainImGuiWindowPos(0, state.mainWindowSize.y - remainingSize.y);
     ImVec2 mainImGuiWindowSize = remainingSize;
 
-    // if (state.processTerm)
-    // {
-    //     ImVec2 terminalImGuiWindowSize = remainingSize;
-    //     terminalImGuiWindowSize.y = terminalImGuiWindowSize.y / 3;
-    //     mainImGuiWindowSize.y -= terminalImGuiWindowSize.y;
-    //     ImGui::SetNextWindowPos(ImVec2(0, mainImGuiWindowPos.y + mainImGuiWindowSize.y));
-    //     ImGui::SetNextWindowSize(terminalImGuiWindowSize);
-    //     state.processTerm->render("Terminal", ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize);
-    // }
-
     ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0);
     ImGui::SetNextWindowPos(mainImGuiWindowPos);
     ImGui::SetNextWindowSize(mainImGuiWindowSize);
@@ -39,7 +29,6 @@ void GUI::render(AppState &state)
         ImGui::PopStyleVar();
     }
 
-    renderPlayListOptions(state);
     renderNewVersionPopup(state);
 }
 
@@ -161,10 +150,11 @@ void GUI::renderMain(AppState &state)
 
     ImGui::Checkbox("Audio only", &state.download.audioOnly);
 
-    if (ImGui::Button("Playlist options"))
-    {
-        state.download.showplaylistOptions = true;
-    }
+    ImGui::Checkbox("Do not download playlist", &state.download.playlist.noPlaylist);
+
+    ImGui::Text("Selection:");
+    ImGui::SameLine();
+    ImGui::InputText("##playlist_selection", state.download.playlist.selectionBuffer, sizeof(state.download.playlist.selectionBuffer));
 
     if (ImGui::Button("Download"))
     {
@@ -183,33 +173,6 @@ void GUI::renderMain(AppState &state)
         state.beets.pickDir = true;
         state.beets.import = true;
     }
-}
-
-void GUI::renderPlayListOptions(AppState &state)
-{
-    if (state.download.showplaylistOptions)
-    {
-        ImGui::OpenPopup("playlist");
-        state.download.showplaylistOptions = false;
-    }
-    if (!ImGui::BeginPopupModal("playlist", nullptr, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove))
-    {
-        return;
-    }
-
-    ImGui::Checkbox("Do not download playlist", &state.download.playlist.noPlaylist);
-
-    ImGui::Text("Selection:");
-    ImGui::SameLine();
-    ImGui::InputText("##playlist_selection", state.download.playlist.selectionBuffer, sizeof(state.download.playlist.selectionBuffer));
-
-    if (ImGui::Button("Save", ImVec2(120, 0)))
-    {
-        ImGui::CloseCurrentPopup();
-    }
-
-    ImGui::SetItemDefaultFocus();
-    ImGui::EndPopup();
 }
 
 void GUI::renderNewVersionPopup(AppState &state)
