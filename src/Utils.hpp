@@ -5,6 +5,7 @@
 #include <string>
 #include <filesystem>
 #include "AppState.hpp"
+#include <functional>
 
 #ifdef _WIN32
 #include <windows.h>
@@ -26,6 +27,7 @@ namespace Utils
     std::string getMusicDir();
     std::string getDownloadsDir();
     std::filesystem::path getBundledExePath(const std::string &name);
+    std::filesystem::path getBundledFilePath(const std::filesystem::path &name);
     std::filesystem::path getLicensePath();
 
     // Returns the absolute path of the running executable
@@ -36,6 +38,8 @@ namespace Utils
     // Windows -> %LOCALAPPDATA%\yt-dlp-beets
     // Linux   -> $HOME/.config/yt-dlp-beets
     std::filesystem::path getUserDataDir();
+
+    std::filesystem::path getTempDir();
 
     // Cross-platform file download using curl
     // url: remote file URL
@@ -61,7 +65,9 @@ namespace Utils
      */
     std::string runCommandOutput(const std::string& cmd);
     
-
+    int runCommandOutputCallback(
+        const std::string &cmd,
+        std::function<void(const std::string &)> lineCallback);
 }
 
 #endif // UTILS_HPP

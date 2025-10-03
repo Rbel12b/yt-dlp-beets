@@ -8,7 +8,8 @@
 #include <memory>
 #include <vector>
 #include <curl/curl.h>
-#include <AppState.hpp>
+#include "AppState.hpp"
+#include <functional>
 
 #ifdef _WIN32
 #include <windows.h>
@@ -25,6 +26,7 @@
 
 namespace Utils
 {
+    static const std::string appName = "yt-dlp-beets";
 
     // Simple splitter: supports double quotes and backslash escaping.
     // Not a full shell parser, but handles common cases like:
@@ -170,7 +172,6 @@ namespace Utils
 
     std::filesystem::path getUserDataDir()
     {
-        static const std::string appName = "yt-dlp-beets";
         std::filesystem::path dataDir;
 
 #ifdef _WIN32
@@ -204,6 +205,34 @@ namespace Utils
         return dataDir;
     }
 
+    std::filesystem::path getTempDir()
+    {
+        std::filesystem::path tempDir;
+
+#ifdef _WIN32
+        char path[MAX_PATH];
+        DWORD len = GetTempPathA(MAX_PATH, path);
+        if (len > 0 && len < MAX_PATH)
+        {
+            tempDir = path;
+            tempDir /= appName;
+        }
+#else
+        const char *tmp = getenv("TMPDIR");
+        if (!tmp || *tmp == '\0')
+            tmp = "/tmp";
+        tempDir = tmp;
+        tempDir /= appName;
+#endif
+
+        if (!tempDir.empty() && !std::filesystem::exists(tempDir))
+        {
+            std::filesystem::create_directories(tempDir);
+        }
+
+        return tempDir;
+    }
+
     static size_t writeFileCallback(void *ptr, size_t size, size_t nmemb, void *stream)
     {
         std::ofstream *ofs = static_cast<std::ofstream *>(stream);
@@ -220,11 +249,11 @@ namespace Utils
         if (dltotal > 0)
         {
             int percent = static_cast<int>((dlnow * 100) / dltotal);
-            state->commandProgress = percent;
+            state->commandInProgress.progress = percent;
         }
         else
         {
-            state->commandProgress = 0;
+            state->commandInProgress.progress = 0;
         }
         return 0; // return non-zero to abort
     }
@@ -539,12 +568,159 @@ namespace Utils
 #endif
     }
 
+    int runCommandOutputCallback(
+        const std::string &cmd,
+        std::function<void(const std::string &)> lineCallback)
+    {
+#if defined(_WIN32)
+        SECURITY_ATTRIBUTES sa{};
+        sa.nLength = sizeof(sa);
+        sa.bInheritHandle = TRUE;
+
+        HANDLE hRead = NULL, hWrite = NULL;
+        if (!CreatePipe(&hRead, &hWrite, &sa, 0))
+        {
+            std::cerr << "Failed to create pipe\n";
+            return 1;
+        }
+        SetHandleInformation(hRead, HANDLE_FLAG_INHERIT, 0);
+
+        STARTUPINFOA si{};
+        PROCESS_INFORMATION pi{};
+        si.cb = sizeof(si);
+        si.dwFlags = STARTF_USESTDHANDLES | STARTF_USESHOWWINDOW;
+        si.wShowWindow = SW_HIDE;
+        si.hStdOutput = hWrite;
+        si.hStdError = hWrite;
+        si.hStdInput = GetStdHandle(STD_INPUT_HANDLE);
+
+        std::string fullCmd = "cmd /C \"" + cmd + "\"";
+        char *mutableCmd = fullCmd.data();
+
+        if (!CreateProcessA(
+                nullptr, mutableCmd, nullptr, nullptr,
+                TRUE, CREATE_NO_WINDOW, nullptr, nullptr,
+                &si, &pi))
+        {
+            CloseHandle(hRead);
+            CloseHandle(hWrite);
+            std::cerr << "CreateProcess failed\n";
+            return 1;
+        }
+
+        CloseHandle(hWrite); // parent only reads
+
+        std::array<char, 4096> buffer;
+        DWORD bytesRead;
+        std::string lineBuffer;
+        while (ReadFile(hRead, buffer.data(), (DWORD)buffer.size() - 1, &bytesRead, NULL) && bytesRead > 0)
+        {
+            buffer[bytesRead] = '\0';
+            lineBuffer += buffer.data();
+
+            size_t pos = 0;
+            while ((pos = lineBuffer.find('\n')) != std::string::npos)
+            {
+                std::string line = lineBuffer.substr(0, pos + 1);
+                lineCallback(line);
+                lineBuffer.erase(0, pos + 1);
+            }
+        }
+
+        if (!lineBuffer.empty())
+            lineCallback(lineBuffer);
+
+        WaitForSingleObject(pi.hProcess, INFINITE);
+
+        DWORD exitCode = 0;
+        GetExitCodeProcess(pi.hProcess, &exitCode);
+
+        CloseHandle(pi.hProcess);
+        CloseHandle(pi.hThread);
+        CloseHandle(hRead);
+
+        return static_cast<int>(exitCode);
+
+#else
+        int pipefd[2];
+        if (pipe(pipefd) == -1)
+        {
+            std::cerr << "pipe() failed\n";
+            return 1;
+        }
+
+        pid_t pid = fork();
+        if (pid == 0)
+        {
+            // child
+            dup2(pipefd[1], STDOUT_FILENO);
+            dup2(pipefd[1], STDERR_FILENO);
+            close(pipefd[0]);
+            close(pipefd[1]);
+            execl("/bin/sh", "sh", "-c", cmd.c_str(), (char *)NULL);
+            _exit(127); // exec failed
+        }
+
+        // parent
+        close(pipefd[1]);
+        std::array<char, 4096> buffer;
+        ssize_t n;
+        std::string lineBuffer;
+        while ((n = read(pipefd[0], buffer.data(), buffer.size() - 1)) > 0)
+        {
+            buffer[n] = '\0';
+            lineBuffer += buffer.data();
+
+            size_t pos = 0;
+            while ((pos = lineBuffer.find('\n')) != std::string::npos)
+            {
+                std::string line = lineBuffer.substr(0, pos + 1);
+                lineCallback(line);
+                lineBuffer.erase(0, pos + 1);
+            }
+        }
+        close(pipefd[0]);
+
+        if (!lineBuffer.empty())
+            lineCallback(lineBuffer);
+
+        int status = 0;
+        waitpid(pid, &status, 0);
+
+        if (WIFEXITED(status))
+            return WEXITSTATUS(status);
+        else if (WIFSIGNALED(status))
+            return 128 + WTERMSIG(status);
+        return -1;
+#endif
+    }
+
     std::filesystem::path getBundledExePath(const std::string &name)
     {
 #ifdef _WIN32
         return getExecutableDir() / "bin" / (name + ".exe");
 #else
         return name;
+#endif
+    }
+
+    std::filesystem::path getBundledFilePath(const std::filesystem::path &name)
+    {
+#ifdef _WIN32
+        return getExecutableDir() / name;
+#else
+        std::filesystem::path path;
+        const char *appdir = std::getenv("APPDIR");
+        if (!appdir)
+        {
+            std::cerr << "APPDIR not set!\n";
+            path = "." / name;
+        }
+        else
+        {
+            path = std::filesystem::path(appdir) / "usr/bin" / name;
+        }
+        return path;
 #endif
     }
 
@@ -562,7 +738,7 @@ namespace Utils
         }
         else
         {
-            licensePath = std::filesystem::path(appdir) / "usr/share/licenses/yt-dlp-beets/LICENSES_COMBINED.txt";
+            licensePath = std::filesystem::path(appdir) / "usr/share/licenses/" / appName / "LICENSES_COMBINED.txt";
         }
 #endif
         return licensePath;

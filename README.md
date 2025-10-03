@@ -6,7 +6,19 @@
 
 </div>
 
-A desktop application for managing and downloading audio files using yt-dlp and beets.
+A gui for [yt-dlp](https://github.com/yt-dlp/yt-dlp) and [beets](https://beets.io)
+
+## Installing
+
+Donwload the [latest release](https://github.com/Rbel12b/yt-dlp-beets/releases/latest)
+
+### Windows
+
+Install the program with the installer, or run the executable from the .zip archive (if available)
+
+### Linux
+
+For the linux AppImage python 3.11 and ffmpeg needs to be installed on PATH.
 
 ## CREDITS
 
@@ -17,7 +29,7 @@ A desktop application for managing and downloading audio files using yt-dlp and 
 - [portable-file-dialogs](https://github.com/samhocevar/portable-file-dialogs): Sam Hocevar, licensed under the WTFPL License.
 - The project's icon is made with gimp using material symbols from [Google Fonts](https://fonts.google.com/icons), and Noto Color Emoji from [Google](https://fonts.google.com/noto/specimen/Noto+Color+Emoji).
 
-See [thirdparty/licenses/NOTICE](thirdparty/licenses/NOTICE.md) for full license texts.
+See [thirdparty/licenses/LICENSES_COMBINED.txt](thirdparty/licenses/LICENSES_COMBINED.txt) for full license texts.
 
 ## LICENSE
 
