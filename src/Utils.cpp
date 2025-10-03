@@ -594,7 +594,7 @@ namespace Utils
         si.hStdError = hWrite;
         si.hStdInput = GetStdHandle(STD_INPUT_HANDLE);
 
-        std::string fullCmd = "cmd /C " + cmd;
+        std::string fullCmd = "cmd /C \"" + cmd + "\"";
         char *mutableCmd = fullCmd.data();
 
         if (!CreateProcessA(
@@ -709,7 +709,18 @@ namespace Utils
 #ifdef _WIN32
         return getExecutableDir() / name;
 #else
-        return name;
+        std::filesystem::path path;
+        const char *appdir = std::getenv("APPDIR");
+        if (!appdir)
+        {
+            std::cerr << "APPDIR not set!\n";
+            path = "." / name;
+        }
+        else
+        {
+            path = std::filesystem::path(appdir) / "usr/bin" / name;
+        }
+        return path;
 #endif
     }
 

@@ -55,7 +55,7 @@ void yt_dlp_utils::createOptionsFile(AppState &state)
     options["urls"] = std::string(state.download.urlBuffer);
 
 #if _WIN32
-    options["ffmpeg_location"] = "\"" + Utils::getBundledExePath("ffmpeg").parent_path().string() + "\"";
+    options["ffmpeg_location"] = Utils::getBundledExePath("ffmpeg").parent_path().string();
 #endif
 
     if (state.download.audioOnly)
@@ -120,6 +120,7 @@ void yt_dlp_utils::createOptionsFile(AppState &state)
 
 void yt_dlp_utils::donwload_callback(AppState *state, const std::string &lineStr)
 {
+    std::cout << lineStr;
     std::stringstream line(lineStr);
 
     std::string type;
