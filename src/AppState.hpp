@@ -12,6 +12,7 @@ class AppState;
 #include <atomic>
 #include "Updater.hpp"
 #include <cstdint>
+#include "Beets.hpp"
 
 class AppState
 {
@@ -87,6 +88,7 @@ public:
         bool import = false;
         bool pickDir = false;
         std::filesystem::path dir;
+        beets::BeetsBackend* backend;
     } beets;
 
     struct

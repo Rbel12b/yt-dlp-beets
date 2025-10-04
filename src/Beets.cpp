@@ -56,3 +56,21 @@ int beets::ensureConfig(AppState& state)
 
     return 0;
 }
+
+bool beets::BeetsBackend::loadLibrary()
+{
+    tracks.clear();
+    std::string cmd = "beet ls -f \"$artist|$album|$title|$path\"";
+
+    return runFunc(cmd, [&](const std::string& line) {
+        if (line.empty()) return;
+        std::stringstream ss(line);
+        std::string artist, album, title, path;
+        if (std::getline(ss, artist, '|') &&
+            std::getline(ss, album, '|') &&
+            std::getline(ss, title, '|') &&
+            std::getline(ss, path, '|')) {
+            tracks.push_back({artist, album, title, path});
+        }
+    }) == 0;
+}

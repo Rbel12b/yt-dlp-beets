@@ -27,14 +27,31 @@ App::App()
 
     std::string versionStr(reinterpret_cast<const char *>(___yt_dlp_beets_version),
                            static_cast<size_t>(___yt_dlp_beets_version_len));
-    state.version = new Version("");
-    (*state.version) = versionStr;
+    state.version = new Version(versionStr);
     state.updater = new Updater();
     state.settings.fileName = Utils::getUserDataDir() / "settings.json";
+    state.beets.backend = new beets::BeetsBackend();
 }
 
 App::~App()
 {
+    if (state.version)
+    {
+        delete state.version;
+        state.version = nullptr;
+    }
+
+    if (state.updater)
+    {
+        delete state.updater;
+        state.updater = nullptr;
+    }
+
+    if (state.beets.backend)
+    {
+        delete state.beets.backend;
+        state.beets.backend = nullptr;
+    }
 }
 
 void App::init()
@@ -42,6 +59,13 @@ void App::init()
     settings_util::loadSettings(state);
 
     state.download = state.settings.defaults.download;
+
+    std::string beetsCommand = PythonSetup::getPythonPath().string() + " -m beets ";
+
+    state.beets.backend->setRunFunc([beetsCommand](const std::string& command, std::function<void(const std::string&)> callback)->int
+        {
+            Utils::runCommandOutputCallback(beetsCommand + command, callback);
+        });
 }
 
 void App::render()
@@ -194,6 +218,12 @@ int App::run(int argc, char **argv, std::filesystem::path logFile)
     {
         delete state.updater;
         state.updater = nullptr;
+    }
+
+    if (state.beets.backend)
+    {
+        delete state.beets.backend;
+        state.beets.backend = nullptr;
     }
 
     return 0;
