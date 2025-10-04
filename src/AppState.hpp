@@ -16,10 +16,35 @@ class AppState;
 class AppState
 {
 public:
-    Version* version;
+    struct Download
+    {
+        struct Playlist
+        {
+            bool noPlaylist = true;
+            char selectionBuffer[64];
+            size_t displayedIndex = 0;
+        };
+        bool start = false;
+        bool audioOnly = true;
+        char urlBuffer[1024];
+        std::string optionsFileName = "";
+        Playlist playlist;
+    };
+
+    struct GUI
+    {
+        enum class Tab
+        {
+            MAIN,
+            SETTINGS
+        };
+        Tab tab = Tab::MAIN;
+    } gui;
+
+    Version *version;
     bool readyForUpdate = false;
     std::string repoUrl = "https://github.com/Rbel12b/yt-dlp-beets";
-    Updater* updater;
+    Updater *updater;
     bool newVersionPopup = false;
     bool downloadUpdate = false;
 
@@ -28,7 +53,8 @@ public:
     ImVec2 mainWindowSize = ImVec2(0, 0);
 
     bool pythonSetupComplete = false;
-    struct{
+    struct
+    {
         bool enabled = false;
         std::string text = "";
         int progress = -1;
@@ -40,25 +66,22 @@ public:
     bool startCommand = false;
     std::string startCmdline = "";
 
+    Download download;
+
     struct
     {
-        bool start = false;
-        bool audioOnly = true;
-        char urlBuffer[1024];
-        std::string optionsFileName = "";
+        std::filesystem::path fileName;
+
+        std::string audioDir;
+        std::string tempAudioDir;
+        std::string videoDir;
+
         struct
         {
-            bool noPlaylist = true;
-            char selectionBuffer[64];
-            std::vector<std::string> flags;
-            size_t displayedIndex = 0;
-        } playlist;
-    } download;
-    
-    std::filesystem::path audioDir;
-    std::filesystem::path tempAudioDir;
-    std::filesystem::path videoDir;
+            Download download;
+        } defaults;
 
+    } settings;
     struct
     {
         bool import = false;
@@ -73,7 +96,6 @@ public:
         std::string msg;
         bool errorLog = false;
     } showFile;
-    
 };
 
 #endif // APP_STATE_H

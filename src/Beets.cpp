@@ -14,10 +14,10 @@ int beets::ensureConfig(AppState& state)
         static_cast<size_t>(___resources_beets_config_yaml_len));
 
 #ifdef _WIN32
-    std::string configBegin = "directory: " + state.audioDir.string() + "\nlibrary: " +
+    std::string configBegin = "directory: " + state.settings.audioDir + "\nlibrary: " +
         (Utils::getUserDataDir() / ".." / ".." / "Roaming" / "beets" / "library.db").string() + "\n";
 #else
-    std::string configBegin = "directory: \"" + state.audioDir.string() + "\"\nlibrary: \"" +
+    std::string configBegin = "directory: \"" + state.settings.audioDir + "\"\nlibrary: \"" +
         (Utils::getUserDataDir() / ".." / ".." / ".local" / "share" / "beets" / "library.db").string() + "\"\n";
 #endif
 

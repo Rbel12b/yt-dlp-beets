@@ -14,6 +14,7 @@ public:
     int run(int argc, char **argv, std::filesystem::path logFile);
 
 private:
+    void init();
     void render();
     void keyCallback(const SDL_KeyboardEvent&);
 

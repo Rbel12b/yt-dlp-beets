@@ -61,7 +61,7 @@ void yt_dlp_utils::createOptionsFile(AppState &state)
     if (state.download.audioOnly)
     {
         options["format"] = "bestaudio/best";
-        options["outtmpl"] = state.tempAudioDir.string() + "/%(title)s [%(id)s].%(ext)s";
+        options["outtmpl"] = state.settings.tempAudioDir + "/%(title)s [%(id)s].%(ext)s";
         options["writethumbnail"] = true;
 
         Json::Value pp(Json::arrayValue);
@@ -84,7 +84,7 @@ void yt_dlp_utils::createOptionsFile(AppState &state)
     else
     {
         options["format"] = "bestvideo+bestaudio/best";
-        options["outtmpl"] = state.videoDir.string() + "/%(title)s [%(id)s].%(ext)s";
+        options["outtmpl"] = state.settings.videoDir + "/%(title)s [%(id)s].%(ext)s";
         options["writethumbnail"] = true;
         options["merge_output_format"] = "mp4";
 
