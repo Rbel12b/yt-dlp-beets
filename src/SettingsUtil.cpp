@@ -36,7 +36,7 @@ void settings_util::loadSettings(AppState &state)
     }
     state.settings.audioDir = Utils::getMusicDir();
     state.settings.videoDir = Utils::getVideosDir();
-    state.settings.tempAudioDir = std::filesystem::path(Utils::getDownloadsDir()) / "Music";
+    state.settings.tempAudioDir = (std::filesystem::path(Utils::getDownloadsDir()) / "Music").string();
     saveSettings(state);
 }
 
