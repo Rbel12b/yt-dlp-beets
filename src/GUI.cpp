@@ -4,6 +4,8 @@
 #include "Utils.hpp"
 #include "python_setup.hpp"
 #include "yt-dlp.hpp"
+#include "imgui_additions.hpp"
+#include "SettingsUtil.hpp"
 
 void GUI::render(AppState &state)
 {
@@ -12,7 +14,10 @@ void GUI::render(AppState &state)
         renderMenuBar(state);
         ImGui::EndMainMenuBar();
     }
+
     renderErrorLogPopup(state);
+    renderNewVersionPopup(state);
+    renderInProgressPopup(state);
 
     ImVec2 remainingSize = ImVec2(state.mainWindowSize.x, state.mainWindowSize.y - 19);
     ImVec2 mainImGuiWindowPos(0, state.mainWindowSize.y - remainingSize.y);
@@ -21,15 +26,59 @@ void GUI::render(AppState &state)
     ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0);
     ImGui::SetNextWindowPos(mainImGuiWindowPos);
     ImGui::SetNextWindowSize(mainImGuiWindowSize);
-    if (ImGui::Begin("main", nullptr, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize))
-    {
-        renderMain(state);
 
-        ImGui::End();
-        ImGui::PopStyleVar();
+    switch (state.gui.tab)
+    {
+    case AppState::GUI::Tab::SETTINGS:
+        settings_util::renderSettings(state);
+        break;
+
+    case AppState::GUI::Tab::MAIN:
+        if (ImGui::Begin("main", nullptr, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize))
+        {
+            renderMain(state);
+            ImGui::End();
+        }
+        break;
+    
+    default:
+        break;
     }
 
-    renderNewVersionPopup(state);
+    ImGui::PopStyleVar();
+}
+
+void GUI::renderInProgressPopup(AppState &state)
+{
+    if (state.commandInProgress.enabled)
+    {
+        ImGui::OpenPopup("inprogress");
+    }
+    ImVec2 windowSize = ImVec2(300, 100);
+    ImGui::SetNextWindowPos(ImVec2((state.mainWindowSize.x - windowSize.x) * 0.5f, (state.mainWindowSize.y - windowSize.y) * 0.5f), ImGuiCond_Always);
+    ImGui::SetNextWindowSize(windowSize, ImGuiCond_Always);
+    if (ImGui::BeginPopupModal("inprogress", nullptr, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoTitleBar))
+    {
+        const char *text = state.commandInProgress.text.c_str();
+        auto textSize = ImGui::CalcTextSize(text);
+        ImGui::SetCursorPos(ImVec2((windowSize.x - textSize.x) * 0.5f, (windowSize.y - textSize.y) * 0.5f - 10));
+        ImGui::Text(text);
+        if (state.commandInProgress.progressDisabled || state.commandInProgress.progress < 0)
+        {
+            ImGui::SetCursorPos(ImVec2((windowSize.x - 30) * 0.5f, (windowSize.y - 30) * 0.5f + 10));
+            ImGui::Spinner("##spinner", 15.0f, 4, ImGui::GetColorU32(ImGuiCol_ButtonHovered));
+        }
+        else
+        {
+            ImGui::ProgressBar((float)state.commandInProgress.progress / 100);
+        }
+
+        if (!state.commandInProgress.enabled)
+        {
+            ImGui::CloseCurrentPopup();
+        }
+        ImGui::End();
+    }
 }
 
 void GUI::renderMenuBar(AppState &state)
@@ -40,6 +89,10 @@ void GUI::renderMenuBar(AppState &state)
         {
             // Signal the application to exit
             state.progamShouldExit = true;
+        }
+        if (ImGui::MenuItem("Settings"))
+        {
+            state.gui.tab = AppState::GUI::Tab::SETTINGS;
         }
         ImGui::EndMenu();
     }
@@ -163,7 +216,7 @@ void GUI::renderMain(AppState &state)
 
     if (ImGui::Button("Import downloaded files to beets library"))
     {
-        state.beets.dir = state.tempAudioDir;
+        state.beets.dir = state.settings.tempAudioDir;
         state.beets.pickDir = false;
         state.beets.import = true;
     }

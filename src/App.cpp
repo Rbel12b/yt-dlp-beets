@@ -7,12 +7,12 @@
 #include <filesystem>
 #include <iostream>
 #include <atomic>
-#include "imgui_additions.hpp"
 #include "yt-dlp.hpp"
 #include "portable-file-dialogs.h"
 #include "Beets.hpp"
 #include "Updater.hpp"
 #include "version.def"
+#include "SettingsUtil.hpp"
 
 App::App()
 {
@@ -25,53 +25,28 @@ App::App()
         state.download.playlist.selectionBuffer[i] = '\0';
     }
 
-    state.audioDir = Utils::getMusicDir();
-    state.videoDir = Utils::getVideosDir();
-    state.tempAudioDir = std::filesystem::path(Utils::getDownloadsDir()) / "Music";
     std::string versionStr(reinterpret_cast<const char *>(___yt_dlp_beets_version),
                            static_cast<size_t>(___yt_dlp_beets_version_len));
     state.version = new Version("");
     (*state.version) = versionStr;
     state.updater = new Updater();
+    state.settings.fileName = Utils::getUserDataDir() / "settings.json";
 }
 
 App::~App()
 {
 }
 
+void App::init()
+{
+    settings_util::loadSettings(state);
+
+    state.download = state.settings.defaults.download;
+}
+
 void App::render()
 {
     state.mainWindowSize = renderer.getWindowSize();
-
-    if (state.commandInProgress.enabled)
-    {
-        ImGui::OpenPopup("inprogress");
-    }
-    ImVec2 windowSize = ImVec2(300, 100);
-    ImGui::SetNextWindowPos(ImVec2((state.mainWindowSize.x - windowSize.x) * 0.5f, (state.mainWindowSize.y - windowSize.y) * 0.5f), ImGuiCond_Always);
-    ImGui::SetNextWindowSize(windowSize, ImGuiCond_Always);
-    if (ImGui::BeginPopupModal("inprogress", nullptr, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoTitleBar))
-    {
-        const char *text = state.commandInProgress.text.c_str();
-        auto textSize = ImGui::CalcTextSize(text);
-        ImGui::SetCursorPos(ImVec2((windowSize.x - textSize.x) * 0.5f, (windowSize.y - textSize.y) * 0.5f - 10));
-        ImGui::Text(text);
-        if (state.commandInProgress.progressDisabled || state.commandInProgress.progress < 0)
-        {
-            ImGui::SetCursorPos(ImVec2((windowSize.x - 30) * 0.5f, (windowSize.y - 30) * 0.5f + 10));
-            ImGui::Spinner("##spinner", 15.0f, 4, ImGui::GetColorU32(ImGuiCol_ButtonHovered));
-        }
-        else
-        {
-            ImGui::ProgressBar((float)state.commandInProgress.progress / 100);
-        }
-
-        if (!state.commandInProgress.enabled)
-        {
-            ImGui::CloseCurrentPopup();
-        }
-        ImGui::End();
-    }
     gui.render(state);
 }
 
@@ -89,6 +64,7 @@ void App::keyCallback(const SDL_KeyboardEvent &keyEvent)
 int App::run(int argc, char **argv, std::filesystem::path logFile)
 {
     state.logFile = logFile;
+    init();
     std::filesystem::path exeDir = Utils::getExecutableDir();
     try
     {
@@ -178,7 +154,7 @@ int App::run(int argc, char **argv, std::filesystem::path logFile)
         {
             if (state.beets.pickDir)
             {
-                auto file_select = pfd::select_folder("Select a directory to import", pfd::path::home());
+                auto file_select = pfd::select_folder("Select a directory to import", state.beets.dir.string());
                 state.beets.dir = file_select.result();
                 std::cout << "Selected dir: " << state.beets.dir << "\n";
             }
@@ -199,6 +175,8 @@ int App::run(int argc, char **argv, std::filesystem::path logFile)
     }
 
     renderer.join();
+
+    settings_util::saveSettings(state);
 
     if (state.readyForUpdate)
     {
