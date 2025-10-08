@@ -64,7 +64,7 @@ void App::init()
 
     state.beets.backend->setRunFunc([beetsCommand](const std::string& command, std::function<void(const std::string&)> callback)->int
         {
-            Utils::runCommandOutputCallback(beetsCommand + command, callback);
+            return Utils::runCommandOutputCallback(beetsCommand + command, callback);
         });
 }
 
@@ -88,6 +88,7 @@ void App::keyCallback(const SDL_KeyboardEvent &keyEvent)
 int App::run(int argc, char **argv, std::filesystem::path logFile)
 {
     state.logFile = logFile;
+    state.renderer = &renderer;
     init();
     std::filesystem::path exeDir = Utils::getExecutableDir();
     try

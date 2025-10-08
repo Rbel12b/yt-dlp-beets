@@ -8,17 +8,17 @@
 
 #include "beets.config.yaml.str"
 
-int beets::ensureConfig(AppState& state)
+int beets::ensureConfig(AppState &state)
 {
-    std::string configStr(reinterpret_cast<const char*>(___resources_beets_config_yaml),
-        static_cast<size_t>(___resources_beets_config_yaml_len));
+    std::string configStr(reinterpret_cast<const char *>(___resources_beets_config_yaml),
+                          static_cast<size_t>(___resources_beets_config_yaml_len));
 
 #ifdef _WIN32
     std::string configBegin = "directory: " + state.settings.audioDir + "\nlibrary: " +
-        (Utils::getUserDataDir() / ".." / ".." / "Roaming" / "beets" / "library.db").string() + "\n";
+                              (Utils::getUserDataDir() / ".." / ".." / "Roaming" / "beets" / "library.db").string() + "\n";
 #else
     std::string configBegin = "directory: \"" + state.settings.audioDir + "\"\nlibrary: \"" +
-        (Utils::getUserDataDir() / ".." / ".." / ".local" / "share" / "beets" / "library.db").string() + "\"\n";
+                              (Utils::getUserDataDir() / ".." / ".." / ".local" / "share" / "beets" / "library.db").string() + "\"\n";
 #endif
 
     std::filesystem::path configFilePath = "";
@@ -60,9 +60,10 @@ int beets::ensureConfig(AppState& state)
 bool beets::BeetsBackend::loadLibrary()
 {
     tracks.clear();
-    std::string cmd = "beet ls -f \"$artist|$album|$title|$path\"";
+    std::string cmd = "ls -f '$artist|$album|$title|$path'";
 
-    return runFunc(cmd, [&](const std::string& line) {
+    return runFunc(cmd, [&](const std::string &line)
+                   {
         if (line.empty()) return;
         std::stringstream ss(line);
         std::string artist, album, title, path;
@@ -70,7 +71,10 @@ bool beets::BeetsBackend::loadLibrary()
             std::getline(ss, album, '|') &&
             std::getline(ss, title, '|') &&
             std::getline(ss, path, '|')) {
+            while (path.back() == '\n' || path.back() == '\r')
+            {
+                path.pop_back();
+            }
             tracks.push_back({artist, album, title, path});
-        }
-    }) == 0;
+        } }) == 0;
 }

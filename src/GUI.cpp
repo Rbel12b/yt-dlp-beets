@@ -6,6 +6,7 @@
 #include "yt-dlp.hpp"
 #include "imgui_additions.hpp"
 #include "SettingsUtil.hpp"
+#include "BeetsGUI.hpp"
 
 void GUI::render(AppState &state)
 {
@@ -197,6 +198,31 @@ void GUI::renderErrorLogPopup(AppState &state)
 
 void GUI::renderMain(AppState &state)
 {
+    static uint currentTab = 0;
+
+    ImGui::BeginTabBar("##mainbar");
+    if (ImGui::BeginTabItem("yt-dlp", nullptr, ImGuiTabItemFlags_None))
+    {
+        currentTab = 0;
+        ImGui::EndTabItem();
+    }
+    if (ImGui::BeginTabItem("beets", nullptr, ImGuiTabItemFlags_None))
+    {
+        currentTab = 1;
+        ImGui::EndTabItem();
+    }
+    ImGui::EndTabBar();
+
+    switch (currentTab)
+    {
+    case 1:
+        beets::BeetsGUI::DrawBeetsGUI(*state.beets.backend, std::bind(&Renderer::createTextureFromRGBA, state.renderer, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
+        return;
+    case 0:
+        // continue to yt-dlp gui
+        break;
+    }
+
     ImGui::Text("Input URL:");
     ImGui::SameLine();
     ImGui::InputText("##Input_URL", state.download.urlBuffer, sizeof(state.download.urlBuffer) - 1);

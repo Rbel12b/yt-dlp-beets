@@ -7,8 +7,9 @@
             ],
             "defines": [],
             "compilerPath": "/usr/bin/gcc",
-            "cStandard": "c17",
-            "intelliSenseMode": "linux-gcc-x64"
+            "cStandard": "c23",
+            "intelliSenseMode": "linux-gcc-x64",
+            "cppStandard": "c++23"
         },
         {
             "name": "Win32",

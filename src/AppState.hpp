@@ -13,6 +13,7 @@ class AppState;
 #include "Updater.hpp"
 #include <cstdint>
 #include "Beets.hpp"
+#include "Renderer.hpp"
 
 class AppState
 {
@@ -41,6 +42,8 @@ public:
         };
         Tab tab = Tab::MAIN;
     } gui;
+
+    Renderer* renderer;
 
     Version *version;
     bool readyForUpdate = false;
@@ -89,6 +92,11 @@ public:
         bool pickDir = false;
         std::filesystem::path dir;
         beets::BeetsBackend* backend;
+
+        struct
+        {
+            bool enabled = false;
+        } showTrack;
     } beets;
 
     struct

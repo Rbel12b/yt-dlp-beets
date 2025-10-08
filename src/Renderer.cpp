@@ -41,7 +41,7 @@ void Renderer::setRenderFunction(std::function<void()> func)
     renderFunction = func;
 }
 
-void Renderer::setKeyCallback(std::function<void(const SDL_KeyboardEvent&)> func)
+void Renderer::setKeyCallback(std::function<void(const SDL_KeyboardEvent &)> func)
 {
     keyCallBack = func;
 }
@@ -148,7 +148,7 @@ void Renderer::endFrame()
     SDL_RenderPresent(renderer);
 }
 
-int Renderer::startRenderLoop(AppState* _state)
+int Renderer::startRenderLoop(AppState *_state)
 {
     if (running)
         return -1; // Already running
@@ -215,4 +215,25 @@ ImVec2 Renderer::getWindowSize() const
     int w, h;
     SDL_GetWindowSize(window, &w, &h);
     return ImVec2((float)w, (float)h);
+}
+
+void *Renderer::createTextureFromRGBA(const unsigned char *rgba, int width, int height)
+{
+    if (!renderer || !rgba)
+        return nullptr;
+
+    SDL_Surface *surface = SDL_CreateRGBSurfaceFrom(
+        (void *)rgba, width, height, 32, width * 4,
+        0x000000FF, 0x0000FF00, 0x00FF0000, 0xFF000000);
+
+    if (!surface)
+        return nullptr;
+
+    SDL_Texture *texture = SDL_CreateTextureFromSurface(renderer, surface);
+    SDL_FreeSurface(surface);
+
+    if (!texture)
+        return nullptr;
+
+    return (void *)texture;
 }

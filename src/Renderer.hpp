@@ -2,6 +2,8 @@
 #ifndef RENDERER_HPP
 #define RENDERER_HPP
 
+class Renderer;
+
 #include <functional>
 #include <thread>
 #include <atomic>
@@ -25,6 +27,8 @@ public:
     void join() { if (renderThread.joinable()) renderThread.join(); }
 
     ImVec2 getWindowSize() const;
+
+    void* createTextureFromRGBA(const unsigned char* rgba, int width, int height);
 
 private:
     int init();

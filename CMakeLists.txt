@@ -9,7 +9,7 @@ file(READ ${VERSION_FILE} VERSION_STRING)
 
 project(${APP_NAME} VERSION ${VERSION_STRING} LANGUAGES CXX)
 
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # --- User-configurable variables ---
@@ -82,7 +82,7 @@ add_subdirectory(${CMAKE_SOURCE_DIR}/thirdparty/lib/CMakeForImGui EXCLUDE_FROM_A
 find_package(SDL2 CONFIG REQUIRED)
 find_package(CURL REQUIRED)
 
-target_link_libraries(${APP_EXECUTABLE} PRIVATE imgui_core imgui_impl_sdl2 imgui_impl_sdlrenderer2 SDL2::SDL2 CURL::libcurl)
+target_link_libraries(${APP_EXECUTABLE} PRIVATE imgui_core imgui_impl_sdl2 imgui_impl_sdlrenderer2 SDL2::SDL2 CURL::libcurl tag)
 
 if(MINGW)
     target_link_libraries(${APP_EXECUTABLE} PRIVATE jsoncpp_static)

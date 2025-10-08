@@ -1,4 +1,10 @@
 #pragma once
+
+namespace beets
+{
+    class BeetsBackend;
+}
+
 #include "AppState.hpp"
 #include <string>
 #include <vector>
@@ -8,32 +14,35 @@
 
 namespace beets
 {
-    int ensureConfig(AppState& state);
-
+    int ensureConfig(AppState &state);
 
     // A track item in the Beets library
-    struct BeetsTrack {
+    struct BeetsTrack
+    {
         std::string artist;
         std::string album;
         std::string title;
         std::string path;
+        SDL_Texture *cover = nullptr;  // texture for cover art
     };
 
-    class BeetsBackend {
+    class BeetsBackend
+    {
     public:
         std::vector<BeetsTrack> tracks;
-        std::function<int(const std::string&, std::function<void(const std::string&)>)> runFunc;
+        std::function<int(const std::string &, std::function<void(const std::string &)>)> runFunc;
 
-        void setRunFunc(const std::function<int(const std::string&, std::function<void(const std::string&)>)>& _runFunc)
+        void setRunFunc(const std::function<int(const std::string &, std::function<void(const std::string &)>)> &_runFunc)
         {
             runFunc = _runFunc;
         }
 
         bool loadLibrary();
 
-        auto groupByArtistAlbum() const {
-            std::unordered_map<std::string, std::unordered_map<std::string, std::vector<const BeetsTrack*>>> grouped;
-            for (const auto& t : tracks)
+        auto groupByArtistAlbum() const
+        {
+            std::unordered_map<std::string, std::unordered_map<std::string, std::vector<const BeetsTrack *>>> grouped;
+            for (const auto &t : tracks)
                 grouped[t.artist][t.album].push_back(&t);
             return grouped;
         }
