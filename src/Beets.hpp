@@ -39,12 +39,15 @@ namespace beets
 
         bool loadLibrary();
 
-        auto groupByArtistAlbum() const
+        auto groupByArtistAlbum(const std::vector<BeetsTrack>& _tracks) const
         {
             std::unordered_map<std::string, std::unordered_map<std::string, std::vector<const BeetsTrack *>>> grouped;
-            for (const auto &t : tracks)
+            for (const auto &t : _tracks)
                 grouped[t.artist][t.album].push_back(&t);
             return grouped;
         }
+
+        std::unordered_map<std::string, std::unordered_map<std::string, std::vector<const BeetsTrack *>>>
+        search(std::string query);
     };
 }

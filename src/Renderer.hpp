@@ -39,6 +39,8 @@ private:
 
     int renderLoop();
 
+    void setupFonts();
+
 private:
     std::function<void()> renderFunction;
     std::function<void(const SDL_KeyboardEvent&)> keyCallBack;

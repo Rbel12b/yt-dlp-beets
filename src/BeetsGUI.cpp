@@ -115,13 +115,12 @@ namespace beets
         void DrawBeetsGUI(BeetsBackend &beets, CreateTextureFunc createTexture)
         {
             static bool loaded = false;
-            static char search[128] = "";
-            static auto grouped = beets.groupByArtistAlbum();
+            static char query[128] = "";
+            static auto searchResults = beets.groupByArtistAlbum(beets.tracks);
 
             if (trackToShow != nullptr)
             {
                 renderTrack(*trackToShow, createTexture);
-                ImGui::End();
                 return;
             }
 
@@ -129,15 +128,16 @@ namespace beets
             {
                 if (beets.loadLibrary())
                 {
-                    grouped = beets.groupByArtistAlbum();
+                    searchResults = beets.search(query);
                     loaded = true;
                 }
             }
 
             ImGui::SameLine();
-            ImGui::InputTextWithHint("##search", "Search...", search, IM_ARRAYSIZE(search));
-
-            ImGui::Separator();
+            if (ImGui::InputTextWithHint("##search", "Search...", query, IM_ARRAYSIZE(query)))
+            {
+                searchResults = beets.search(query);
+            }
 
             if (!loaded)
             {
@@ -146,45 +146,23 @@ namespace beets
             else
             {
                 int i = 0;
-                for (auto &[artist, albums] : grouped)
+                for (auto &[artist, albums] : searchResults)
                 {
-                    if (strlen(search) > 0 && artist.find(search) == std::string::npos)
-                    {
-                        continue;
-                    }
                     ImGui::PushID(i);
                     if (ImGui::TreeNode(artist.c_str()))
                     {
                         for (auto& [album_name, tracks] : albums)
                         {
-                            bool albumVisible = false;
-                            for (auto &t : tracks)
-                            {
-                                if (strlen(search) == 0 ||
-                                    t->title.find(search) != std::string::npos ||
-                                    album_name.find(search) != std::string::npos ||
-                                    t->artist.find(search) != std::string::npos)
-                                {
-                                    albumVisible = true;
-                                    break;
-                                }
-                            }
-                            if (!albumVisible || tracks.size() == 0)
+                            if (tracks.size() == 0)
                                 continue;
 
                             if (album_name == "" || album_name == " ")
                             {
                                 for (auto &t : tracks)
                                 {
-                                    if (strlen(search) == 0 ||
-                                        t->title.find(search) != std::string::npos ||
-                                        album_name.find(search) != std::string::npos ||
-                                        t->artist.find(search) != std::string::npos)
-                                    {
-                                        ImGui::BulletText("%s", t->title.c_str());
-                                        if (ImGui::IsItemClicked()) {
-                                            showTrack(*t);
-                                        }
+                                    ImGui::BulletText("%s", t->title.c_str());
+                                    if (ImGui::IsItemClicked()) {
+                                        showTrack(*t);
                                     }
                                 }
                                 continue;
@@ -207,15 +185,9 @@ namespace beets
 
                                 for (auto &t : tracks)
                                 {
-                                    if (strlen(search) == 0 ||
-                                        t->title.find(search) != std::string::npos ||
-                                        album_name.find(search) != std::string::npos ||
-                                        t->artist.find(search) != std::string::npos)
-                                    {
-                                        ImGui::BulletText("%s", t->title.c_str());
-                                        if (ImGui::IsItemClicked()) {
-                                            showTrack(*t);
-                                        }
+                                    ImGui::BulletText("%s", t->title.c_str());
+                                    if (ImGui::IsItemClicked()) {
+                                        showTrack(*t);
                                     }
                                 }
                             }

@@ -5,6 +5,8 @@
 #include "imgui_impl_sdlrenderer2.h"
 #include <stdio.h>
 #include <SDL2/SDL.h>
+#include <iostream>
+#include "Utils.hpp"
 #ifdef _WIN32
 #include <windows.h> // SetProcessDPIAware()
 #endif
@@ -91,6 +93,8 @@ int Renderer::setup()
     ImGuiStyle &style = ImGui::GetStyle();
     style.ScaleAllSizes(main_scale); // Bake a fixed style scale. (until we have a solution for dynamic style scaling, changing this requires resetting Style + calling this again)
     style.FontScaleDpi = main_scale; // Set initial font scale. (using io.ConfigDpiScaleFonts=true makes this unnecessary. We leave both here for documentation purpose)
+
+    setupFonts();
 
     // Setup Platform/Renderer backends
     ImGui_ImplSDL2_InitForSDLRenderer(window, renderer);
@@ -215,6 +219,43 @@ ImVec2 Renderer::getWindowSize() const
     int w, h;
     SDL_GetWindowSize(window, &w, &h);
     return ImVec2((float)w, (float)h);
+}
+
+void Renderer::setupFonts()
+{
+    ImGuiIO& io = ImGui::GetIO();
+    io.Fonts->Clear();
+
+    ImFontGlyphRangesBuilder builder;
+    builder.AddRanges(io.Fonts->GetGlyphRangesDefault());
+    builder.AddText("'‘’“”–—…");
+
+    ImVector<ImWchar> out_ranges;
+    builder.BuildRanges(&out_ranges);
+
+    // Keep `out_ranges` alive as long as io.Fonts is used (the ranges pointer is not copied deep)
+    static std::vector<ImWchar> s_FontRangesContainer;
+    s_FontRangesContainer.assign(out_ranges.Data, out_ranges.Data + out_ranges.Size);
+
+    const ImWchar* glyph_ranges = s_FontRangesContainer.data();
+
+    const char* font_filename = "NotoSans-Regular.ttf";  
+    std::string font_path = Utils::getBundledFilePath(font_filename);
+
+    float font_size_px = 18.0f;
+
+    ImFontConfig font_cfg;
+    font_cfg.OversampleH = 2;
+    font_cfg.OversampleV = 1;
+    font_cfg.PixelSnapH = true;
+
+    ImFont* font = io.Fonts->AddFontFromFileTTF(font_path.c_str(), font_size_px, &font_cfg, glyph_ranges);
+    if (font == nullptr) {
+        std::cerr << "Failed to load font from: " << font_path << std::endl;
+        assert(false && "Font load failed");
+    }
+
+    io.FontDefault = font;
 }
 
 void *Renderer::createTextureFromRGBA(const unsigned char *rgba, int width, int height)

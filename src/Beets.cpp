@@ -5,6 +5,7 @@
 #include "python_setup.hpp"
 #include <iostream>
 #include <fstream>
+#include <rapidfuzz/fuzz.hpp>
 
 #include "beets.config.yaml.str"
 
@@ -77,4 +78,45 @@ bool beets::BeetsBackend::loadLibrary()
             }
             tracks.push_back({artist, album, title, path});
         } }) == 0;
+}
+
+std::unordered_map<std::string, std::unordered_map<std::string, std::vector<const beets::BeetsTrack *>>> beets::BeetsBackend::search(std::string query)
+{
+    std::unordered_map<std::string, std::unordered_map<std::string, std::vector<const BeetsTrack *>>> results;
+
+    struct SearchResult {
+        BeetsTrack* track;
+        double score;
+    };
+
+    std::vector<SearchResult> searchResults;
+    if (query.length() == 0)
+    {
+        return groupByArtistAlbum(tracks);
+    }
+
+
+    for (auto &track : tracks)
+    {
+        double s_artist = rapidfuzz::fuzz::partial_ratio(query, track.artist);
+        double s_album  = rapidfuzz::fuzz::partial_ratio(query, track.album);
+        double s_title  = rapidfuzz::fuzz::partial_ratio(query, track.title);
+        double s_max = std::max({s_artist, s_album, s_title});
+
+        if (s_max >= 70.0) {
+            searchResults.push_back({&track, s_max});
+        }
+    }
+
+    std::sort(searchResults.begin(), searchResults.end(),
+              [](const SearchResult &a, const SearchResult &b) {
+                  return a.score > b.score;
+              });
+
+    for (auto &result : searchResults)
+    {
+        results[result.track->artist][""].push_back(result.track);
+    }
+
+    return results;
 }

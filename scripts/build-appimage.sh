@@ -24,6 +24,7 @@ cp "$BUILD_DIR/$APP" "$APPDIR/usr/bin/"
 chmod +x "$APPDIR/usr/bin/$APP"
 
 cp "resources/yt-dlp-wrapper.py" "$APPDIR/usr/bin/"
+cp "resources/NotoSans-Regular.ttf" "$APPDIR/usr/bin/"
 
 cp "thirdparty/licenses/LICENSES_COMBINED.txt" "$APPDIR/usr/share/licenses/${APP}/"
 

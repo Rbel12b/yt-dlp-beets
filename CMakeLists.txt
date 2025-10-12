@@ -38,6 +38,7 @@ set(BEETS_CONFIG_OUT "${CMAKE_BINARY_DIR}/beets.config.yaml.str")
 set(PROJECT_LICENSES_COMBINED "${CMAKE_SOURCE_DIR}/thirdparty/licenses/LICENSES_COMBINED.txt")
 
 set(YT_DLP_WRAPPER "${CMAKE_SOURCE_DIR}/resources/yt-dlp-wrapper.py")
+set(DEFAULT_FONT "${CMAKE_SOURCE_DIR}/resources/NotoSans-Regular.ttf")
 
 # --- Find dependencies ---
 file(GLOB_RECURSE SOURCES CONFIGURE_DEPENDS src/*.cpp)
@@ -78,16 +79,17 @@ set(DearImGui_Backend_SDLRenderer2 ON)
 set(DearImGui_Backend_SDL2 ON)
 
 add_subdirectory(${CMAKE_SOURCE_DIR}/thirdparty/lib/CMakeForImGui EXCLUDE_FROM_ALL)
+add_subdirectory(thirdparty/lib/RapidFuzz)
 
 find_package(SDL2 CONFIG REQUIRED)
 find_package(CURL REQUIRED)
 
-target_link_libraries(${APP_EXECUTABLE} PRIVATE imgui_core imgui_impl_sdl2 imgui_impl_sdlrenderer2 SDL2::SDL2 CURL::libcurl tag)
+target_link_libraries(${APP_EXECUTABLE} imgui_core imgui_impl_sdl2 imgui_impl_sdlrenderer2 SDL2::SDL2 CURL::libcurl tag rapidfuzz::rapidfuzz)
 
 if(MINGW)
-    target_link_libraries(${APP_EXECUTABLE} PRIVATE jsoncpp_static)
+    target_link_libraries(${APP_EXECUTABLE} jsoncpp_static)
 else()
-    target_link_libraries(${APP_EXECUTABLE} PRIVATE jsoncpp)
+    target_link_libraries(${APP_EXECUTABLE} jsoncpp)
 endif()
 
 # --- Custom commands: generate icons ---
@@ -219,6 +221,7 @@ endif()
 # --- Install rules ---
 install(TARGETS ${APP_EXECUTABLE} RUNTIME DESTINATION .)
 install(FILES ${YT_DLP_WRAPPER} DESTINATION .)
+install(FILES ${DEFAULT_FONT} DESTINATION .)
 
 # Bundle FFmpeg + Python
 if(WIN32)
