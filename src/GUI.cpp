@@ -20,7 +20,7 @@ void GUI::render(AppState &state)
     renderNewVersionPopup(state);
     renderInProgressPopup(state);
 
-    ImVec2 remainingSize = ImVec2(state.mainWindowSize.x, state.mainWindowSize.y - 19);
+    ImVec2 remainingSize = ImVec2(state.mainWindowSize.x, state.mainWindowSize.y - 24);
     ImVec2 mainImGuiWindowPos(0, state.mainWindowSize.y - remainingSize.y);
     ImVec2 mainImGuiWindowSize = remainingSize;
 
@@ -31,7 +31,7 @@ void GUI::render(AppState &state)
     switch (state.gui.tab)
     {
     case AppState::GUI::Tab::SETTINGS:
-        settings_util::renderSettings(state);
+        settings_util::renderSettings(state, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize);
         break;
 
     case AppState::GUI::Tab::MAIN:
