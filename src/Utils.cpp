@@ -695,6 +695,24 @@ namespace Utils
 #endif
     }
 
+    int setEnv(std::string name, std::string value)
+    {
+    #if defined(_WIN32)
+        // On Windows, use _putenv_s (safe CRT version)
+        if (_putenv_s(name.c_str(), value.c_str()) != 0) {
+            std::cerr << "Failed to set " << name << " environment variable.\n";
+            return false;
+        }
+    #else
+        // On POSIX, use setenv
+        if (setenv(name.c_str(), value.c_str(), 1) != 0) {
+            perror("setenv");
+            return false;
+        }
+    #endif
+        return true;
+    }
+
     std::filesystem::path getBundledExePath(const std::string &name)
     {
 #ifdef _WIN32

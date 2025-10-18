@@ -103,7 +103,7 @@ int App::run(int argc, char **argv, std::filesystem::path logFile)
 #ifdef _WIN32
     std::filesystem::path pythonExe = (exeDir / "python" / "python.exe");
 #else
-    std::filesystem::path pythonExe = "python3"; // Assume system python3 on Linux
+    std::filesystem::path pythonExe = "python3.12"; // Assume system python3.12 on Linux
 #endif
     std::filesystem::path pythonPath = "";
 
@@ -190,8 +190,11 @@ int App::run(int argc, char **argv, std::filesystem::path logFile)
             else
             {
                 std::cout << "Importing to beets library.\n";
-                Utils::runInteractiveTerminal(pythonPath.string() +
-                                              " -m beets import \"" + state.beets.dir.string() + "\"");
+                std::string cmd = pythonPath.string() + " -m beets import \"" + state.beets.dir.string() + "\"";
+                if (!Utils::runInteractiveTerminal(cmd));
+                {
+                    std::cerr << "Command returned non-zero: " << cmd << "\n";
+                }
             }
             state.beets.import = false;
         }

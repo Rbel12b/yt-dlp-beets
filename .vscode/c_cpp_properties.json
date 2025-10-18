@@ -14,7 +14,8 @@
         {
             "name": "Win32",
             "includePath": [
-                "${workspaceFolder}/**"
+                "${workspaceFolder}/**",
+                "/usr/local/x86_64-w64-mingw32/include/"
             ],
             "defines": [],
             "cStandard": "c17",

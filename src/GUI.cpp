@@ -198,7 +198,7 @@ void GUI::renderErrorLogPopup(AppState &state)
 
 void GUI::renderMain(AppState &state)
 {
-    static uint currentTab = 0;
+    static size_t currentTab = 0;
 
     ImGui::BeginTabBar("##mainbar");
     if (ImGui::BeginTabItem("yt-dlp", nullptr, ImGuiTabItemFlags_None))

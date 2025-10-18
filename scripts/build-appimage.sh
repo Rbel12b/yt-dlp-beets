@@ -23,6 +23,10 @@ mkdir -p "$APPDIR/usr/share/licenses/${APP}/"
 cp "$BUILD_DIR/$APP" "$APPDIR/usr/bin/"
 chmod +x "$APPDIR/usr/bin/$APP"
 
+# 5. Copy additional resources
+
+cp thirdparty/linux/* "$APPDIR/usr/bin/"
+
 cp "resources/yt-dlp-wrapper.py" "$APPDIR/usr/bin/"
 cp "resources/NotoSans-Regular.ttf" "$APPDIR/usr/bin/"
 

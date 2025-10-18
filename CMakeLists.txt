@@ -81,10 +81,12 @@ set(DearImGui_Backend_SDL2 ON)
 add_subdirectory(${CMAKE_SOURCE_DIR}/thirdparty/lib/CMakeForImGui EXCLUDE_FROM_ALL)
 add_subdirectory(thirdparty/lib/RapidFuzz)
 
+find_package(ZLIB REQUIRED)
 find_package(SDL2 CONFIG REQUIRED)
 find_package(CURL REQUIRED)
+find_package(TagLib REQUIRED)
 
-target_link_libraries(${APP_EXECUTABLE} imgui_core imgui_impl_sdl2 imgui_impl_sdlrenderer2 SDL2::SDL2 CURL::libcurl tag rapidfuzz::rapidfuzz)
+target_link_libraries(${APP_EXECUTABLE} imgui_core imgui_impl_sdl2 imgui_impl_sdlrenderer2 SDL2::SDL2 CURL::libcurl TagLib::tag rapidfuzz::rapidfuzz)
 
 if(MINGW)
     target_link_libraries(${APP_EXECUTABLE} jsoncpp_static)
@@ -229,6 +231,7 @@ if(WIN32)
     install(FILES
         ${CMAKE_SOURCE_DIR}/thirdparty/windows/ffmpeg.exe
         ${CMAKE_SOURCE_DIR}/thirdparty/windows/ffprobe.exe
+        ${CMAKE_SOURCE_DIR}/thirdparty/windows/fpcalc.exe
         DESTINATION bin
     )
     install(DIRECTORY ${CMAKE_SOURCE_DIR}/thirdparty/windows/python/ DESTINATION python)

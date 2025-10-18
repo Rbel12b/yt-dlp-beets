@@ -68,6 +68,8 @@ namespace Utils
     int runCommandOutputCallback(
         const std::string &cmd,
         std::function<void(const std::string &)> lineCallback);
+
+    int setEnv(std::string name, std::string value);
 }
 
 #endif // UTILS_HPP

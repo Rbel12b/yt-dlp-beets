@@ -29,13 +29,17 @@ namespace beets
     class BeetsBackend
     {
     public:
+        using runFuncType = std::function<int(const std::string &, std::function<void(const std::string &)>)>;
+        runFuncType runFunc;
+        
         std::vector<BeetsTrack> tracks;
-        std::function<int(const std::string &, std::function<void(const std::string &)>)> runFunc;
 
-        void setRunFunc(const std::function<int(const std::string &, std::function<void(const std::string &)>)> &_runFunc)
+        void setRunFunc(const runFuncType &_runFunc)
         {
             runFunc = _runFunc;
         }
+
+        int runBeetsCommand(const std::string &, std::function<void(const std::string &)>);
 
         bool loadLibrary();
 

@@ -26,11 +26,20 @@ int beets::ensureConfig(AppState &state)
 
     try
     {
-        std::string cmd = PythonSetup::getPythonPath().string() + " -m beets config -p";
-        std::string output = Utils::runCommandOutput(cmd);
+        if (!Utils::setEnv("FPCALC", Utils::getBundledExePath("fpcalc").string()))
+        {
+            throw std::runtime_error("Failed to set FPCALC enviroment variable");
+        }
+
+        std::string cmd = "config -p";
+        std::string output;
+
+        state.beets.backend->runBeetsCommand(cmd, [&output](const std::string &line)
+                                             { output += line; });
+
         if (output.size() == 0)
         {
-            throw std::runtime_error("command returned nothing: " + cmd);
+            throw std::runtime_error("Command returned nothing: " + cmd);
         }
         while (output.back() == '\n' || output.back() == '\r')
         {
@@ -58,13 +67,23 @@ int beets::ensureConfig(AppState &state)
     return 0;
 }
 
+int beets::BeetsBackend::runBeetsCommand(const std::string &cmd, std::function<void(const std::string &)> callback)
+{
+    return runFunc(cmd, callback);
+}
+
 bool beets::BeetsBackend::loadLibrary()
 {
     tracks.clear();
+#ifdef _WIN32
+    std::string cmd = "ls -f \"$artist|$album|$title|$path\"";
+#else
     std::string cmd = "ls -f '$artist|$album|$title|$path'";
+#endif
 
-    return runFunc(cmd, [&](const std::string &line)
-                   {
+    return runBeetsCommand(cmd, [&](const std::string &line)
+        {
+        std::cout << line;
         if (line.empty()) return;
         std::stringstream ss(line);
         std::string artist, album, title, path;
@@ -84,8 +103,9 @@ std::unordered_map<std::string, std::unordered_map<std::string, std::vector<cons
 {
     std::unordered_map<std::string, std::unordered_map<std::string, std::vector<const BeetsTrack *>>> results;
 
-    struct SearchResult {
-        BeetsTrack* track;
+    struct SearchResult
+    {
+        BeetsTrack *track;
         double score;
     };
 
@@ -95,21 +115,22 @@ std::unordered_map<std::string, std::unordered_map<std::string, std::vector<cons
         return groupByArtistAlbum(tracks);
     }
 
-
     for (auto &track : tracks)
     {
         double s_artist = rapidfuzz::fuzz::partial_ratio(query, track.artist);
-        double s_album  = rapidfuzz::fuzz::partial_ratio(query, track.album);
-        double s_title  = rapidfuzz::fuzz::partial_ratio(query, track.title);
+        double s_album = rapidfuzz::fuzz::partial_ratio(query, track.album);
+        double s_title = rapidfuzz::fuzz::partial_ratio(query, track.title);
         double s_max = std::max({s_artist, s_album, s_title});
 
-        if (s_max >= 70.0) {
+        if (s_max >= 70.0)
+        {
             searchResults.push_back({&track, s_max});
         }
     }
 
     std::sort(searchResults.begin(), searchResults.end(),
-              [](const SearchResult &a, const SearchResult &b) {
+              [](const SearchResult &a, const SearchResult &b)
+              {
                   return a.score > b.score;
               });
 

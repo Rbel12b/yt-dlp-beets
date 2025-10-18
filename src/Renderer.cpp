@@ -240,7 +240,7 @@ void Renderer::setupFonts()
     const ImWchar* glyph_ranges = s_FontRangesContainer.data();
 
     const char* font_filename = "NotoSans-Regular.ttf";  
-    std::string font_path = Utils::getBundledFilePath(font_filename);
+    std::string font_path = Utils::getBundledFilePath(std::filesystem::path(font_filename)).string();
 
     float font_size_px = 18.0f;
 
