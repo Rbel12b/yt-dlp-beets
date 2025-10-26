@@ -28,6 +28,8 @@ For the linux AppImage python 3.11 and ffmpeg needs to be installed on PATH.
 - [ffmpeg](https://ffmpeg.org): bundled into the installer, used for media processing, licensed under the LGPLv2.1+ License.
 - [portable-file-dialogs](https://github.com/samhocevar/portable-file-dialogs): Sam Hocevar, licensed under the WTFPL License.
 - [jsoncpp](https://github.com/open-source-parsers/jsoncpp): see [LICENSE](https://github.com/open-source-parsers/jsoncpp?tab=License-1-ov-file)
+- [rapidfuzz-cpp](https://github.com/rapidfuzz/rapidfuzz-cpp): see [LICENSE](https://github.com/rapidfuzz/rapidfuzz-cpp?tab=MIT-1-ov-file)
+- [Rbel12b-cpplib](https://github.com/Rbel12b/cpplib): see [LICENSE](https://github.com/Rbel12b/cpplib?tab=AGPL-3.0-1-ov-file)
 - stb_image: from [stb libraries](https://github.com/nothings/stb)
 - The project's icon is made with gimp using material symbols from [Google Fonts](https://fonts.google.com/icons), and Noto Color Emoji from [Google](https://fonts.google.com/noto/specimen/Noto+Color+Emoji).
 
