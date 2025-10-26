@@ -48,26 +48,7 @@ namespace Utils
 
     bool loadFileToString(const std::string &path, std::string &out);
 
-    // Cross-platform command execution
-    // Windows: hides console windows
-    // Linux/macOS: runs via system()
-    int runCommand(const std::string &cmd);
-
     bool runInteractiveTerminal(const std::string &command);
-
-    bool runCommandDetached(const std::filesystem::path &exePath, const std::string &argString);
-
-    /**
-     * execute a command and return the output.
-     * @param cmd the command to execute
-     * @returns the output (stdout)
-     * @exception throws std::runtime_error if failed
-     */
-    std::string runCommandOutput(const std::string& cmd);
-    
-    int runCommandOutputCallback(
-        const std::string &cmd,
-        std::function<void(const std::string &)> lineCallback);
 
     int setEnv(std::string name, std::string value);
 }

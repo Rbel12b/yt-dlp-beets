@@ -7,3 +7,6 @@
 [submodule "thirdparty/lib/RapidFuzz"]
 	path = thirdparty/lib/RapidFuzz
 	url = https://github.com/rapidfuzz/rapidfuzz-cpp.git
+[submodule "thirdparty/lib/cpplib"]
+	path = thirdparty/lib/cpplib
+	url = https://github.com/Rbel12b/cpplib

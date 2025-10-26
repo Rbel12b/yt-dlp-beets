@@ -86,7 +86,9 @@ find_package(SDL2 CONFIG REQUIRED)
 find_package(CURL REQUIRED)
 find_package(TagLib REQUIRED)
 
-target_link_libraries(${APP_EXECUTABLE} imgui_core imgui_impl_sdl2 imgui_impl_sdlrenderer2 SDL2::SDL2 CURL::libcurl TagLib::tag rapidfuzz::rapidfuzz)
+add_subdirectory(thirdparty/lib/cpplib)
+
+target_link_libraries(${APP_EXECUTABLE} imgui_core imgui_impl_sdl2 imgui_impl_sdlrenderer2 SDL2::SDL2 CURL::libcurl TagLib::tag rapidfuzz::rapidfuzz Rbel12b-cpplib::ProcessUtils)
 
 if(MINGW)
     target_link_libraries(${APP_EXECUTABLE} jsoncpp_static)
