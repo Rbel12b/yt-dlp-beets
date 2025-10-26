@@ -2,6 +2,7 @@
 #include "Utils.hpp"
 #include <iostream>
 #include <fstream>
+#include "Rbel12b-cpplib/ProcessUtils/ProcessUtils.hpp"
 
 bool Updater::checkUpdate(AppState& state)
 {
@@ -65,7 +66,12 @@ void Updater::update(AppState& state)
         std::cout << "latest installer not found, maybe download it?";
         return;
     }
-    if (!Utils::runCommandDetached(newExePath.string(), ""))
+    cpplib::Process proc;
+
+    proc.setCommand(newExePath);
+    proc.setDetached(true);
+    
+    if (proc.run())
     {
         std::cout << "Failed to start installer: " << newExePath << "\n";
     }
@@ -79,8 +85,17 @@ void Updater::update(AppState& state)
     }
     std::filesystem::remove(exePath);
     std::filesystem::rename(newExePath, exePath);
-    Utils::runCommand("chmod +x \"" + exePath.string() + "\"");
-    if (!Utils::runCommandDetached(exePath, ""))
+    cpplib::Process proc;
+    proc.setCommand(std::filesystem::path("chmod"));
+    proc.appendArgument("+x");
+    proc.appendArgument(exePath.string());
+    proc.run();
+
+    cpplib::Process proc2;
+
+    proc2.setCommand(exePath);
+    proc2.setDetached(true);
+    if (proc2.run())
     {
         std::cout << "Failed to start new AppIamge: " << newExePath << "\n";
     }

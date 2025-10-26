@@ -31,7 +31,7 @@ int beets::ensureConfig(AppState &state)
             throw std::runtime_error("Failed to set FPCALC enviroment variable");
         }
 
-        std::string cmd = "config -p";
+        std::vector<std::string> cmd = {"config", "-p"};
         std::string output;
 
         state.beets.backend->runBeetsCommand(cmd, [&output](const std::string &line)
@@ -39,7 +39,7 @@ int beets::ensureConfig(AppState &state)
 
         if (output.size() == 0)
         {
-            throw std::runtime_error("Command returned nothing: " + cmd);
+            throw std::runtime_error("Command returned nothing: " + cmd[0]);
         }
         while (output.back() == '\n' || output.back() == '\r')
         {
@@ -67,7 +67,7 @@ int beets::ensureConfig(AppState &state)
     return 0;
 }
 
-int beets::BeetsBackend::runBeetsCommand(const std::string &cmd, std::function<void(const std::string &)> callback)
+int beets::BeetsBackend::runBeetsCommand(const std::vector<std::string> &cmd, std::function<void(const std::string &)> callback)
 {
     return runFunc(cmd, callback);
 }
@@ -75,11 +75,8 @@ int beets::BeetsBackend::runBeetsCommand(const std::string &cmd, std::function<v
 bool beets::BeetsBackend::loadLibrary()
 {
     tracks.clear();
-#ifdef _WIN32
-    std::string cmd = "ls -f \"$artist|$album|$title|$path\"";
-#else
-    std::string cmd = "ls -f '$artist|$album|$title|$path'";
-#endif
+
+    std::vector<std::string> cmd = {"ls", "-f", "$artist|$album|$title|$path"};
 
     return runBeetsCommand(cmd, [&](const std::string &line)
         {

@@ -5,6 +5,7 @@
 #include <fstream>
 #include "Utils.hpp"
 #include "AppState.hpp"
+#include "Rbel12b-cpplib/ProcessUtils/ProcessUtils.hpp"
 
 #ifdef _WIN32
 #include <windows.h>
@@ -26,7 +27,6 @@ namespace PythonSetup
         // 1. Create venv if it doesn't exist
         if (!fs::exists(venvDir))
         {
-            std::string cmd;
 #ifdef _WIN32
             fs::path getPip = dataDir / "get-pip.py";
             if (!fs::exists(getPip))
@@ -38,10 +38,16 @@ namespace PythonSetup
                     return 1;
                 }
             }
+            cpplib::Process proc2;
+            proc2.setCommand(pythonExe);
+            proc2.appendArgument(getPip.string());
+            proc2.appendArgument("--user");
 
-            cmd = "\"" + pythonExe.string() + "\" \"" + getPip.string() + "\" --user";
-            std::cout << "Installing pip: " << cmd << std::endl;
-            if (Utils::runCommand(cmd) != 0)
+            std::cout << "Installing pip\n";
+
+            proc2.run();
+
+            if (proc2.getExitCode() != 0)
             {
                 std::cerr << "Failed to install pip\n";
                 return 1;
@@ -51,23 +57,38 @@ namespace PythonSetup
             std::ofstream marker(pipMarker);
             marker << "pip installed";
 
-            cmd = "\"" + pythonExe.string() + "\" -m pip install --user virtualenv";
-            std::cout << "Installing virtualenv: " << cmd << std::endl;
-            if (Utils::runCommand(cmd) != 0)
+            cpplib::Process proc3;
+            proc3.setCommand(pythonExe);
+            proc3.appendArgument("-m");
+            proc3.appendArgument("pip");
+            proc3.appendArgument("install");
+            proc3.appendArgument("--user");
+            proc3.appendArgument("virtualenv");
+
+            std::cout << "Installing virtualenv\n";
+            proc3.run();
+            if (proc3.getExitCode() != 0)
             {
                 std::cerr << "Failed to install virtualenv\n";
                 return 1;
             }
 
-            // Wrap both the python path and the venv path in quotes using cmd /C
-            cmd = "\"" + pythonExe.string() + "\" -m virtualenv \"" + venvDir.string() + "\"";
+            cpplib::Process proc;
+            proc.setCommand(pythonExe);
+            proc.appendArgument("-m");
+            proc.appendArgument("virtualenv");
+            proc.appendArgument(venvDir.string());
 #else
-            // Linux/macOS: normal quotes work
-            cmd = "\"" + pythonExe.string() + "\" -m venv \"" + venvDir.string() + "\"";
+            cpplib::Process proc;
+            proc.setCommand(pythonExe);
+            proc.appendArgument("-m");
+            proc.appendArgument("venv");
+            proc.appendArgument(venvDir.string());
 #endif
 
-            std::cout << "Creating virtualenv: " << cmd << std::endl;
-            if (Utils::runCommand(cmd) != 0)
+            std::cout << "Creating virtualenv\n";
+            proc.run();
+            if (proc.getExitCode() != 0)
             {
                 std::cerr << "Failed to create virtual environment\n";
                 return 1;
@@ -84,6 +105,7 @@ namespace PythonSetup
         // 2. Install pip if needed
         if (!fs::exists(pipMarker))
         {
+            cpplib::Process proc;
 #ifdef _WIN32
             fs::path getPip = dataDir / "get-pip.py";
             if (!fs::exists(getPip))
@@ -97,11 +119,13 @@ namespace PythonSetup
             }
             std::string cmd = "\"" + venvPython.string() + "\" \"" + getPip.string() + "\"";
 #else
-            // Linux: system python venv already has ensurepip
-            std::string cmd = "\"" + venvPython.string() + "\" -m ensurepip";
+            proc.setCommand(venvPython);
+            proc.appendArgument("-m");
+            proc.appendArgument("ensurepip");
 #endif
-            std::cout << "Installing pip: " << cmd << std::endl;
-            if (Utils::runCommand(cmd) != 0)
+            std::cout << "Installing pip\n";
+            proc.run();
+            if (proc.getExitCode() != 0)
             {
                 std::cerr << "Failed to install pip\n";
                 return 1;
@@ -111,11 +135,20 @@ namespace PythonSetup
             marker << "pip installed";
         }
 
-        // 3. Install beets with extras
-        std::string beetsCmd = "\"" + venvPython.string() + "\" -m pip install --upgrade pip "
-                                                            "beets[fetchart,lyrics,embedart,chroma] yt-dlp";
-        std::cout << "Installing beets: " << beetsCmd << std::endl;
-        if (Utils::runCommand(beetsCmd) != 0)
+        cpplib::Process proc;
+
+        proc.setCommand(venvPython);
+        proc.appendArgument("-m");
+        proc.appendArgument("pip");
+        proc.appendArgument("install");;
+        proc.appendArgument("--upgrade");
+        proc.appendArgument("pip");
+        proc.appendArgument("beets[fetchart,lyrics,embedart,chroma]");
+        proc.appendArgument("yt-dlp");
+
+        std::cout << "Installing beets\n";
+        proc.run();
+        if (proc.getExitCode() != 0)
         {
             std::cerr << "Failed to install beets\n";
             return 1;

@@ -8,6 +8,7 @@
 #include <json/json.h>
 #include <fstream>
 #include <sstream>
+#include <Rbel12b-cpplib/ProcessUtils/ProcessUtils.hpp>
 
 void yt_dlp_utils::download(AppState &state)
 {
@@ -19,17 +20,11 @@ void yt_dlp_utils::download(AppState &state)
 
     createOptionsFile(state);
 
-    std::string yt_dlp_cmd = PythonSetup::getPythonPath().string();
+    cpplib::Process proc;
 
-#if _WIN32
-    yt_dlp_cmd = "\"" + yt_dlp_cmd + "\"";
-#endif
-
-    yt_dlp_cmd += " \"" + Utils::getBundledFilePath("yt-dlp-wrapper.py").string() + "\"";
-
-    yt_dlp_cmd += " " + state.download.optionsFileName;
-
-    std::cout << yt_dlp_cmd << "\n";
+    proc.setCommand(PythonSetup::getPythonPath());
+    proc.appendArgument(Utils::getBundledFilePath("yt-dlp-wrapper.py").string());
+    proc.appendArgument(state.download.optionsFileName);
 
     state.commandInProgress.enabled = true;
     state.commandInProgress.progressDisabled = false;
@@ -43,7 +38,8 @@ void yt_dlp_utils::download(AppState &state)
         state.commandInProgress.text = "Downloading playlist";
         state.download.playlist.displayedIndex = 0;
     }
-    Utils::runCommandOutputCallback(yt_dlp_cmd, std::bind(download_callback, &state, std::placeholders::_1));
+    proc.setOutputCallback(std::bind(download_callback, &state, std::placeholders::_1));
+    proc.run();
     state.commandInProgress.enabled = false;
 }
 

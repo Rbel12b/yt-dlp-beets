@@ -13,6 +13,7 @@
 #include "Updater.hpp"
 #include "version.def"
 #include "SettingsUtil.hpp"
+#include "Rbel12b-cpplib/ProcessUtils/ProcessUtils.hpp"
 
 App::App()
 {
@@ -60,11 +61,18 @@ void App::init()
 
     state.download = state.settings.defaults.download;
 
-    std::string beetsCommand = PythonSetup::getPythonPath().string() + " -m beets ";
+    auto python = PythonSetup::getPythonPath();
 
-    state.beets.backend->setRunFunc([beetsCommand](const std::string& command, std::function<void(const std::string&)> callback)->int
+    state.beets.backend->setRunFunc([python](const std::vector<std::string>& args, std::function<void(const std::string&)> callback)->int
         {
-            return Utils::runCommandOutputCallback(beetsCommand + command, callback);
+            cpplib::Process proc;
+            proc.setCommand(python);
+            proc.appendArgument("-m");
+            proc.appendArgument("beets");
+            proc.appendArguments(args);
+            proc.setOutputCallback(callback);
+            proc.run();
+            return proc.getExitCode();
         });
 }
 
